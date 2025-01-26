@@ -1,17 +1,13 @@
 package com.zinikai.shop.domain.member.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.QMemberResponseDto;
-import com.zinikai.shop.domain.member.entity.Member;
-import com.zinikai.shop.domain.member.entity.QMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 
 import java.util.List;
 
@@ -42,13 +38,15 @@ private final JPAQueryFactory queryFactory;
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        long total = queryFactory
-                .selectFrom(member)
+
+        // 배웠던 fetchCount 를 대신 사용
+        Long total = queryFactory
+                .select(member.id.count())
+                .from(member)
                 .where(phoneNumberEq(phoneNumber),
                         nameEq(name))
                 .orderBy(member.id.desc())
-                .fetch()   // 最新, fetchcountは、使わない
-                .size();
+                .fetchOne();
 
         return new PageImpl<>(content,pageable,total);
     }
