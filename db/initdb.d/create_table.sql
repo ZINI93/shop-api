@@ -7,3 +7,18 @@ CREATE TABLE member (
   address VARCHAR(255) NOT NULL,
   role VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE product (
+   id BIGINT PRIMARY KEY AUTO_INCREMENT,
+   name VARCHAR(255) UNIQUE NOT NULL,
+   price DECIMAL(10,2) NOT NULL,
+   description VARCHAR(255) NOT NULL,
+   stock INT NOT NULL
+);
+
+CREATE TABLE ProductImage (
+    productImageId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT,
+    imageUrl VARCHAR(255) NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES Product(id) ON DELETE CASCADE
+);

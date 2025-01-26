@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.member.entity;
 
+import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +8,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Member {
+public class Member extends TimeStamp {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

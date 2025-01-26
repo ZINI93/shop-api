@@ -78,3 +78,16 @@ API 설계
 4. 결제
    POST /api/payments: 결제 생성 (주문에 대한 결제 진행)
    GET /api/payments/{id}: 결제 상태 조회
+
+
+ 상품 동적쿼리
+페이징: ?page=0&size=10
+가격 범위: ?minPrice=100&maxPrice=500
+정렬: ?sortField=price
+검색: ?keyword=sample
+
+✅ 동적 검색 조건
+✔️ 주문 상태 (status)
+✔️ 주문 기간 (startDate, endDate)
+✔️ 주문 금액 범위 (minAmount, maxAmount)
+✔️ 정렬 필드 (sortField)

@@ -21,17 +21,11 @@ import java.util.stream.Collectors;
 
 @Transactional(readOnly = true)
 @Service
+@RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService{
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    public MemberServiceImpl(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
-        this.memberRepository = memberRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
 
     /**
      * 会員登録
