@@ -10,8 +10,8 @@ services:
     ports:
       - "3307:3306"
     environment:
-      - MYSQL_DATABASE=zini-shop
-      - MYSQL_USER=shop_local_user
+      - MYSQL_DATABASE=zini_shop
+      - MYSQL_USER=zini_show_user
       - MYSQL_PASSWORD=root
-      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ROOT_PASSWORD=shop0320
       - TZ=Asia/Seoul

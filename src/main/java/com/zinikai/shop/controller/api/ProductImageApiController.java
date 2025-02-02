@@ -9,12 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/product/productImage")
+@RequestMapping("/api/admin/product-images")
 @RequiredArgsConstructor
 public class ProductImageApiController {
 
     private final ProductImageService productImageService;
 
+    //商品のイメージをせい生成　ー POSTMEN TEST 完了
 
     @PostMapping
     public ResponseEntity<ProductImageResponseDto> createProductImage(@RequestBody ProductImageRequestDto requestDto){
@@ -23,12 +24,14 @@ public class ProductImageApiController {
         return ResponseEntity.created(location).body(productImage);
     }
 
+    //イメージををIDで探す　ー POSTMEN TEST 完了
     @GetMapping("{productImageId}")
     public ResponseEntity<ProductImageResponseDto> findByImageId(@PathVariable Long productImageId){
         ProductImageResponseDto productImageById = productImageService.getProductImageById(productImageId);
         return ResponseEntity.ok(productImageById);
     }
 
+    //イメージをアップデートをする　ー POSTMEN TEST 完了
     @PutMapping("{productImageId}")
     public ResponseEntity<ProductImageResponseDto> editProductImage(@PathVariable Long productImageId,
                                                                     @RequestBody ProductImageUpdateDto UpdateDto){
@@ -36,6 +39,7 @@ public class ProductImageApiController {
         return ResponseEntity.ok(productImageResponseDto);
     }
 
+    //イメージを削除　ー POSTMEN TEST 完了
     @DeleteMapping("{productImageId}")
     public ResponseEntity<ProductImageResponseDto> deleteProductImage(@PathVariable Long productImageId){
         productImageService.deleteProductImage(productImageId);

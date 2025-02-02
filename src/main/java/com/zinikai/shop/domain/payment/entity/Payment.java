@@ -13,7 +13,7 @@ import lombok.*;
 public class Payment extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "payment_id", nullable = false)
     private Long id;
 
     @ManyToOne

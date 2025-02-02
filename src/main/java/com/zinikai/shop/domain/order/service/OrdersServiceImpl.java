@@ -1,5 +1,7 @@
 package com.zinikai.shop.domain.order.service;
 
+import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
@@ -22,12 +24,16 @@ import java.time.LocalDateTime;
 public class OrdersServiceImpl implements OrdersService {
 
     private final OrdersRepository ordersRepository;
+    private final MemberRepository memberRepository;
 
     @Override @Transactional
     public OrdersResponseDto createOrder(OrdersRequestDto requestDto) {
 
+        Member member = memberRepository.findById(requestDto.getMemberId()).orElseThrow(() -> new IllegalArgumentException("会員が登録をされていません"));
+
+
         Orders orders = Orders.builder()
-                .member(requestDto.getMember())
+                .member(member)
                 .totalAmount(requestDto.getTotalAmount())
                 .status(Status.COMPLETED)
                 .paymentMethod(requestDto.getPaymentMethod())

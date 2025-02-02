@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 public class Product extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "productId", nullable = false)
+    @Column(name = "product_id", nullable = false)
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -41,6 +41,7 @@ public class Product extends TimeStamp {
     public ProductResponseDto toResponseDto(){
 
         return ProductResponseDto.builder()
+                .id(this.id)
                 .name(this.name)
                 .price(this.price)
                 .description(this.description)

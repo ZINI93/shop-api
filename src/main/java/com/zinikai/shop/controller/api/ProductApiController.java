@@ -15,29 +15,23 @@ import java.math.BigDecimal;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/product")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class ProductApiController {
 
     private final ProductService productService;
 
 
-    //商品登録
-    @PostMapping
-    public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductRequestDto requestDto){
-        ProductResponseDto product = productService.createProduct(requestDto);
-        URI location = URI.create("/api/product" + product.getId());
-        return ResponseEntity.created(location).body(product);
-    }
-
-    // idで探す
-    @GetMapping("{productId}")
+    // idで探す - POSTMEN TEST 完了
+    @GetMapping("/product/{productId}")
     public ResponseEntity<ProductResponseDto> findById(@PathVariable Long productId){
         ProductResponseDto productById = productService.getProductById(productId);
         return ResponseEntity.ok(productById);
     }
 
-    @GetMapping
+    // ー　POSTMEN TEST 完了
+
+    @GetMapping("/products")
     public ResponseEntity<Page<ProductResponseDto>> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
@@ -48,18 +42,4 @@ public class ProductApiController {
         return ResponseEntity.ok(searchProducts);
     }
 
-    //アップデート
-    @PutMapping("{productId}")
-    public ResponseEntity<ProductResponseDto> editProduct(
-            @PathVariable Long productId,
-            @RequestBody ProductUpdateDto updateDto){
-        ProductResponseDto updatedProduct = productService.updateProduct(productId, updateDto);
-        return ResponseEntity.ok(updatedProduct);
-    }
-
-    @DeleteMapping({"{productId}"})
-    public ResponseEntity<ProductResponseDto> deleteProduct(@PathVariable Long productId){
-        productService.deleteProduct(productId);
-        return ResponseEntity.noContent().build();
-    }
 }

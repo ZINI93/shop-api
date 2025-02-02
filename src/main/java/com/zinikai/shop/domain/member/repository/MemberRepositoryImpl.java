@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.zinikai.shop.domain.member.entity.QMember.*;
 
@@ -27,7 +28,7 @@ private final JPAQueryFactory queryFactory;
                 .select(new QMemberResponseDto(
                         member.id.as("memberId"),
                         member.email,
-                        member.password,
+                        member.name,
                         member.phoneNumber,
                         member.address))
                 .from(member)
@@ -40,24 +41,34 @@ private final JPAQueryFactory queryFactory;
 
 
         // 배웠던 fetchCount 를 대신 사용
-        Long total = queryFactory
+        Long total = Optional.ofNullable(queryFactory
                 .select(member.id.count())
                 .from(member)
                 .where(phoneNumberEq(phoneNumber),
                         nameEq(name))
                 .orderBy(member.id.desc())
-                .fetchOne();
+                .fetchOne()).orElseThrow();  // fetchOne 을 쓸때 null check
 
         return new PageImpl<>(content,pageable,total);
     }
 
     private BooleanExpression phoneNumberEq(String phoneNumberCnd) {
-        return isNotEmpty(phoneNumberCnd) ? member.phoneNumber.eq(phoneNumberCnd) : null;
+        return phoneNumberCnd != null && !phoneNumberCnd.isEmpty()  ? member.phoneNumber.contains(phoneNumberCnd) : null;
     }
 
     private BooleanExpression nameEq(String nameCnd) {
-        return isNotEmpty(nameCnd) ? member.name.eq(nameCnd) : null;
+        return nameCnd != null && !nameCnd.isEmpty()? member.name.contains(nameCnd) : null;
+        //contains 부분 속한 이름도 조회
     }
+
+
+
+//    private BooleanExpression phoneNumberEq(String phoneNumberCnd) {
+//        return isNotEmpty(phoneNumberCnd) ? member.phoneNumber.replace("-", "").eq(phoneNumberCnd.replace("-", "")) : null;
+//    }
+
+
+
 
     private boolean isNotEmpty(String value){
         return value!=null&& !value.isEmpty();
