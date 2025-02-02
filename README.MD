@@ -27,7 +27,7 @@
 ## インストール方法
 1. リポジトリのクローン
    ```bash
-   git clone https://github.com/yourusername/shop-api.git
+   git clone https://github.com/ZINI93/shop-api.git
    cd shop-api
 
 # API 設計
