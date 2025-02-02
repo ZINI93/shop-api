@@ -7,6 +7,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zinikai.shop.domain.member.entity.QMember;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.QOrdersResponseDto;
+import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.QOrders;
 import com.zinikai.shop.domain.order.entity.Status;
 import lombok.RequiredArgsConstructor;
@@ -74,18 +75,21 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
     }
 
     private BooleanExpression filterByStatus(Status status) {
-        return status != null ? orders.status.eq(status) : null;
+        if (status == null){
+            return Expressions.TRUE;  // 제외시키고 검색가능 하게하는 기능
+        }
+        return orders.status.eq(status);
     }
 
     private BooleanExpression filterByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate == null && endDate == null){
             return Expressions.TRUE;   // querydslはANDを使う時, NULLをそのまま、使ったらNullPointExceptionの　可能性がありま。
         } else if (startDate == null){
-            return orders.createdAt.loe(endDate);
+            return orders.createdAt.isNotNull().and(orders.createdAt.loe(endDate));
         } else if ( endDate == null){
-            return orders.createdAt.goe(startDate);
+            return orders.createdAt.isNotNull().and(orders.createdAt.goe(startDate));
         }else {
-            return orders.createdAt.between(startDate,endDate);
+            return orders.createdAt.isNotNull().and(orders.createdAt.between(startDate,endDate));
         }
     }
 
@@ -93,11 +97,13 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
         if (minAmount == null && maxAmount == null){
             return Expressions.TRUE;
         } else if (minAmount == null){
-            return orders.totalAmount.loe(maxAmount);
+            return orders.totalAmount.isNotNull().and(orders.totalAmount.loe(maxAmount));
         } else if ( maxAmount == null){
-            return orders.totalAmount.goe(minAmount);
-        } return orders.totalAmount.between(minAmount, maxAmount);
-
+            return orders.totalAmount.isNotNull().and(orders.totalAmount.goe(minAmount));
+        } else if (minAmount.compareTo(maxAmount) == 0){
+            return orders.totalAmount.isNotNull().and(orders.totalAmount.goe(minAmount).and(orders.totalAmount.loe(maxAmount)));
+        }
+        return orders.totalAmount.isNotNull().and(orders.totalAmount.between(minAmount, maxAmount));
     }
 //    private OrderSpecifier<?> getSortOrder(String sortField) {
 //        if ("createdAt".equalsIgnoreCase(sortField)) {

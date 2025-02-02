@@ -27,5 +27,5 @@ public class TimeStamp {
 
     @Column(nullable = false)
     @LastModifiedDate
-    private LocalDateTime modifiedAt;
+    private LocalDateTime updatedAt;
 }

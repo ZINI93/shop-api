@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class ProductImage extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "productImageId", nullable = false)
+    @Column(name = "image_id", nullable = false)
     private Long id;
 
     @ManyToOne
@@ -33,6 +33,7 @@ public class ProductImage extends TimeStamp {
 
     public ProductImageResponseDto toResponse() {
         return ProductImageResponseDto.builder()
+                .id(this.id)
                 .product(this.product)
                 .imageUrl(this.imageUrl)
                 .build();

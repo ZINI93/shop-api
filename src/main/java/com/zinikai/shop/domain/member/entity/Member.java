@@ -24,7 +24,7 @@ public class Member extends TimeStamp {
     @Column(nullable = false)
     private String name; // 이름
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true,name = "phone_number")
     private String phoneNumber;
 
     @Embedded

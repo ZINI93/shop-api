@@ -22,19 +22,22 @@ public class OrderApiController {
 
     private final OrdersService orderService;
 
+    //オーダーする　ー　POSTMEN TEST 完了
     @PostMapping
-    public ResponseEntity<OrdersResponseDto> createOrder(OrdersRequestDto requestDto){
+    public ResponseEntity<OrdersResponseDto> createOrder(@RequestBody OrdersRequestDto requestDto){
         OrdersResponseDto order = orderService.createOrder(requestDto);
         URI location = URI.create("/api/orders" + order.getId());
         return ResponseEntity.created(location).body(order);
 
     }
+    // オーダーをIDで照会　ー　POSTMEN TEST 完了
     @GetMapping("{orderId}")
     public ResponseEntity<OrdersResponseDto> getOrderId(@PathVariable Long orderId){
         OrdersResponseDto orderById = orderService.getOrderById(orderId);
         return ResponseEntity.ok(orderById);
     }
 
+    // ー　POSTMEN TEST 完了
     @GetMapping
     public ResponseEntity<Page<OrdersResponseDto>> searchOrder(
             @RequestParam(required = false) Status status,
@@ -51,13 +54,14 @@ public class OrderApiController {
 
     }
 
-
+    //オーダーをアップデート　ー　POSTMEN TEST 完了
     @PutMapping("{orderId}")
-    public ResponseEntity<OrdersResponseDto> editOrder(@PathVariable Long orderId, OrdersUpdateDto updateDto){
+    public ResponseEntity<OrdersResponseDto> editOrder(@PathVariable Long orderId, @RequestBody OrdersUpdateDto updateDto){
         OrdersResponseDto orderUpdate = orderService.updateOrder(orderId, updateDto);
         return ResponseEntity.ok(orderUpdate);
     }
 
+    //オーダーを削除　ー　POSTMEN TEST 完了
     @DeleteMapping("{orderId}")
     public ResponseEntity<OrdersResponseDto> deleteOrder(@PathVariable Long orderId){
         orderService.deleteOrder(orderId);

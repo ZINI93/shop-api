@@ -21,7 +21,7 @@ public class CartController {
     private final CartService cartService;
 
 
-    //カートに追加
+    //カートに追加 - POSTMEN TEST 完了
     @PostMapping
     public ResponseEntity<CartResponseDto> createCart(@RequestBody CartRequestDto requestDto){
         CartResponseDto cart = cartService.createCart(requestDto);
@@ -29,22 +29,22 @@ public class CartController {
         return  ResponseEntity.created(location).body(cart);
     }
 
-    //カートを照会
+    //カートを照会 - POSTMEN TEST 完了
     @GetMapping("{cartId}")
     public ResponseEntity<CartResponseDto> findById(@PathVariable Long cartId){
         CartResponseDto cart = cartService.findById(cartId);
         return  ResponseEntity.ok(cart);
     }
 
-    //メンバー別、カートの商品のリスト
-    @GetMapping("/my")
+    //メンバー別、カートの商品のリスト　ー- POSTMEN TEST 完了
+    @GetMapping
     public ResponseEntity<List<CartResponseDto>> findAllByMember(){
         List<CartResponseDto> carts = cartService.getAllCart();
         return ResponseEntity.ok(carts);
     }
 
 
-    //カートをアップデート
+    //カートをアップデート ー- POSTMEN TEST 完了
     @PutMapping("{cartId}")
     public ResponseEntity<CartResponseDto> editCart(@PathVariable Long cartId,
                                                     @RequestBody CartUpdateDto updateDto){
@@ -52,7 +52,7 @@ public class CartController {
         return  ResponseEntity.ok(updateCart);
     }
 
-    //カートを削除
+    //カートを削除 ー- POSTMEN TEST 完了
     @DeleteMapping("{cartId}")
     public ResponseEntity<Void> deleteCart(@PathVariable Long cartId){
         cartService.deleteCart(cartId);

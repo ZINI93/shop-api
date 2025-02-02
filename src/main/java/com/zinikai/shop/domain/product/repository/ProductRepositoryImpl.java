@@ -3,6 +3,7 @@ package com.zinikai.shop.domain.product.repository;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -67,22 +68,26 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
     //　価格範囲設定
     private BooleanExpression priceRangeCond(BigDecimal minPrice, BigDecimal maxPrice) {
         if (maxPrice == null && minPrice == null) {
-            return null;
+            return Expressions.TRUE;
         } else if (minPrice == null) {
-            return product.price.loe(maxPrice);
+            return product.price.isNotNull().and(product.price.loe(maxPrice));
         } else if (maxPrice == null) {
-            return product.price.goe(minPrice);
+            return product.price.isNotNull().and(product.price.goe(minPrice));
+        } else {
+            return product.price.isNotNull().and(product.price.between(minPrice, maxPrice));
         }
-        return product.price.between(minPrice,maxPrice);
     }
-
     private BooleanExpression priceBetween(BigDecimal maxPrice, BigDecimal minPrice) {
         return null;
     }
 
     private BooleanExpression productNameContains(String keyword) {
-        return (keyword != null && ! keyword.isBlank()) ? product.name.containsIgnoreCase(keyword) : null;
+        if (keyword == null){
+            return Expressions.TRUE;
+        }
+        return product.name.containsIgnoreCase(keyword);
     }
+
     private OrderSpecifier<?> getSortOrder(String sortField){
         if ("price".equalsIgnoreCase(sortField)){
             return product.price.asc();

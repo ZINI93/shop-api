@@ -11,6 +11,9 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Table(uniqueConstraints = {
+        @UniqueConstraint(name = "UniqueMemberProduct", columnNames = {"member_id", "product_id"})
+})
 public class Cart extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

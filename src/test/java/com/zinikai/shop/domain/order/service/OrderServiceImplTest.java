@@ -1,6 +1,7 @@
 package com.zinikai.shop.domain.order.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 
+    @Mock MemberRepository memberRepository;
     @Mock OrdersRepository ordersRepository;
 
     @InjectMocks
@@ -39,7 +41,7 @@ class OrderServiceImplTest {
     @BeforeEach
     void setup(){
         ordersRequest = new OrdersRequestDto(
-                Member.builder().id(1L).build(),
+                Member.builder().id(1L).build().getId(),
                 new BigDecimal(10),
                 Status.COMPLETED,
                 "PayPay"
@@ -58,7 +60,9 @@ class OrderServiceImplTest {
     @DisplayName("오더 생성 테스트")
     void TestCreateOrder(){
         //given
+        Member memberId = Member.builder().id(1L).build();
 
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(memberId));
         when(ordersRepository.save(any(Orders.class))).thenReturn(orders);
 
         //when

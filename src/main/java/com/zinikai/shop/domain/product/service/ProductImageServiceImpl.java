@@ -1,8 +1,10 @@
 package com.zinikai.shop.domain.product.service;
 
 import com.zinikai.shop.domain.product.dto.*;
+import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
+import com.zinikai.shop.domain.product.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,12 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductImageServiceImpl implements ProductImageService {
 
     private final ProductImageRepository productImageRepository;
+    private final ProductRepository productRepository;
 
     //イメージ생서
     @Override @Transactional
     public ProductImageResponseDto createProductImage(ProductImageRequestDto requestDto) {
+        Product productId = productRepository.findById(requestDto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("商品がありません。"));
+
         ProductImage savedProductImage = ProductImage.builder()
-                .product(requestDto.getProduct())
+                .product(productId)
                 .imageUrl(requestDto.getImageUrl())
                 .build();
         return productImageRepository.save(savedProductImage).toResponse();
