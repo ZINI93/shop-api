@@ -178,36 +178,36 @@ API 설계
 정렬: ?sortField=price
 검색: ?keyword=sample
 
-✅ 동적 검색 조건
-✔️ 주문 상태 (status)
-✔️ 주문 기간 (startDate, endDate)
-✔️ 주문 금액 범위 (minAmount, maxAmount)
-✔️ 정렬 필드 (sortField)
+동적 검색 조건
+✔ 주문 상태 (status)
+✔ 주문 기간 (startDate, endDate)
+✔ 주문 금액 범위 (minAmount, maxAmount)
+✔ 정렬 필드 (sortField)
 
-### **🛠 Auth**
+### ** Auth**
 - `POST /authenticate` → 로그인 (JWT 발급)
 - **TEST TOKEN** 발급 ID: user1@example.com  Password: 12341234
 
-### **👥 Member**
+### ** Member**
 - `GET /api/member/{memberId}` → 회원 ID로 조회
 - `POST /api/member/join` → 회원가입
 - `PUT /api/member` → 회원 수정
 
-### **🛒 Cart**
+### ** Cart**
 - `POST /api/cart` → 장바구니에 상품 추가
 - `GET /api/cart/{cartId}` → 장바구니 개별 상품 조회
 - `GET /api/cart` → 장바구니 전체 조회
 - `PUT /api/cart/{cartId}` → 장바구니 상품 수량 변경
 - `DELETE /api/cart/{cartId}` → 장바구니 상품 삭제
 
-### **📦 Order**
+### ** Order**
 - `POST /api/orders` → 주문 생성
 - `GET /api/orders/{orderId}` → 주문 ID로 조회
 - `GET /api/orders?status=&startDate=&endDate=&sort=` → **(필터 & 정렬)** 전체 주문 조회
 - `PUT /api/orders/{orderId}` → 주문 수정
 - `DELETE /api/orders/{orderId}` → 주문 삭제
 
-### **💰 Payment**
+### ** Payment**
 - `POST /api/payment` → 결제 생성
 - `GET /api/payment/{paymentId}` → 결제 ID로 조회
 - `PUT /api/payment/{paymentId}/method` → 결제 방법 수정
