@@ -215,14 +215,14 @@ API 설계
 - `PUT /api/payment/{paymentId}/refund` → 환불 요청
 - `DELETE /api/payment/{paymentId}` → 결제 삭제
 
-### **🛍 Product**
+### ** Product**
 - `POST /api/admin/product` → **(관리자)** 상품 생성
 - `GET /api/product/{productId}` → 상품 ID로 조회
 - `GET /api/products?keyword=&priceMin=&priceMax=&sort=` → 상품 검색
 - `PUT /api/admin/product/{productId}` → **(관리자)** 상품 수정
 - `DELETE /api/admin/product/{productId}` → **(관리자)** 상품 삭제
 
-### **🖼 Product Image**
+### ** Product Image**
 - `POST /api/admin/product-images` → **(관리자)** 상품 이미지 추가
 - `GET /api/product-images?productId={productId}` → 특정 상품의 모든 이미지 조회 (미구현)
 - `PUT /api/admin/product-images/{imageId}` → **(관리자)** 상품 이미지 수정
