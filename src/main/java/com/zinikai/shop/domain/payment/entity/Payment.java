@@ -16,7 +16,7 @@ public class Payment extends TimeStamp {
     @Column(name = "payment_id", nullable = false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "orders_id")  // 결제 방법을 늘어날 확장성으 고려해서  oneToone 을 사용하지 않는다.
     private Orders orders;
 

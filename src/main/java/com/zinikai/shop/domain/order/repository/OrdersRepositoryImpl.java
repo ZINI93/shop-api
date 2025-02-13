@@ -123,6 +123,8 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
         return SORT_FIELDS.getOrDefault(sortField.toLowerCase(),orders.id.desc());
     }
 
+
+
 //    getOrDefault()를 사용하여 기본 정렬 필드(id.desc()) 처리.
 //            Map.of()를 활용하면 if-else 없이 바로 정렬 필드를 가져올 수 있음.
 }

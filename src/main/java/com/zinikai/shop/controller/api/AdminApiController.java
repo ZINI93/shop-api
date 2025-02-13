@@ -25,7 +25,6 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminApiController {
 
-
     private final PaymentService paymentService;
     private final ProductService productService;
     private final MemberService memberService;

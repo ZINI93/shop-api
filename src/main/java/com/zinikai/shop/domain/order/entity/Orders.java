@@ -19,7 +19,7 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     @Column(name = "orders_id", nullable = false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 

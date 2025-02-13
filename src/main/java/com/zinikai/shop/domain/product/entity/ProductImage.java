@@ -18,7 +18,7 @@ public class ProductImage extends TimeStamp {
     @Column(name = "image_id", nullable = false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
 
