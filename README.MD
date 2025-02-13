@@ -1,7 +1,6 @@
 # ショッピングモール API
 
-このプロジェクトは、商品検索、カート機能、注文および支払い処理ができるシンプルなショッピングモールAPIです。また、管理者ページを通じて商品登録や在庫管理も可能です。このプロジェクトは、DockerとKubernetesを使用してデプロイでき、CI/CDパイプラインをGitHub Actionsで自動化しています。
-
+このプロジェクトは、商品検索、カート機能、注文および支払い処理ができるシンプルなショッピングモールAPIです。また、管理者ページを通じて商品登録や在庫管理も可能です。現在、Dockerを用いたデプロイ環境を構築中であり、CI/CDパイプラインの自動化も目指しています。
 ## 機能
 
 ### 商品管理
@@ -21,14 +20,8 @@
 
 ## 技術スタック
 - **バックエンド**: Java, Spring Boot, JPA, MySQL
-- **デプロイ**: Docker, Kubernetes
+- **デプロイ**: Docker
 - **CI/CD**: GitHub Actions
-
-## インストール方法
-1. リポジトリのクローン
-   ```bash
-   git clone https://github.com/yourusername/shop-api.git
-   cd shop-api
 
 # API 設計
 
@@ -100,12 +93,8 @@ GET /api/products?page=0&size=10
 - **Product と ProductCategory**: N:1 関係（複数の商品が1つのカテゴリーに属する）
 - **Product と ProductImage**: 1:N 関係（1つの商品が複数の画像を持つ）
 
-### 追加事項
-- **商品登録および編集時の在庫管理**: 管理者ページで商品を登録または編集する際に、在庫数を追加または編集するAPIが必要です。
-- **注文状態の管理**: 注文が進行する各状態（支払い待ち、支払い完了、配送準備など）を管理するフィールドが必要です。
 
-
----- 한국어 --- 
+---- 　韓国語　--- 
 
 # 쇼핑몰 API
 
@@ -189,36 +178,36 @@ API 설계
 정렬: ?sortField=price
 검색: ?keyword=sample
 
-✅ 동적 검색 조건
-✔️ 주문 상태 (status)
-✔️ 주문 기간 (startDate, endDate)
-✔️ 주문 금액 범위 (minAmount, maxAmount)
-✔️ 정렬 필드 (sortField)
+동적 검색 조건
+✔ 주문 상태 (status)
+✔ 주문 기간 (startDate, endDate)
+✔ 주문 금액 범위 (minAmount, maxAmount)
+✔ 정렬 필드 (sortField)
 
-### **🛠 Auth**
+### ** Auth**
 - `POST /authenticate` → 로그인 (JWT 발급)
 - **TEST TOKEN** 발급 ID: user1@example.com  Password: 12341234
 
-### **👥 Member**
+### ** Member**
 - `GET /api/member/{memberId}` → 회원 ID로 조회
 - `POST /api/member/join` → 회원가입
 - `PUT /api/member` → 회원 수정
 
-### **🛒 Cart**
+### ** Cart**
 - `POST /api/cart` → 장바구니에 상품 추가
 - `GET /api/cart/{cartId}` → 장바구니 개별 상품 조회
 - `GET /api/cart` → 장바구니 전체 조회
 - `PUT /api/cart/{cartId}` → 장바구니 상품 수량 변경
 - `DELETE /api/cart/{cartId}` → 장바구니 상품 삭제
 
-### **📦 Order**
+### ** Order**
 - `POST /api/orders` → 주문 생성
 - `GET /api/orders/{orderId}` → 주문 ID로 조회
 - `GET /api/orders?status=&startDate=&endDate=&sort=` → **(필터 & 정렬)** 전체 주문 조회
 - `PUT /api/orders/{orderId}` → 주문 수정
 - `DELETE /api/orders/{orderId}` → 주문 삭제
 
-### **💰 Payment**
+### ** Payment**
 - `POST /api/payment` → 결제 생성
 - `GET /api/payment/{paymentId}` → 결제 ID로 조회
 - `PUT /api/payment/{paymentId}/method` → 결제 방법 수정
@@ -226,14 +215,14 @@ API 설계
 - `PUT /api/payment/{paymentId}/refund` → 환불 요청
 - `DELETE /api/payment/{paymentId}` → 결제 삭제
 
-### **🛍 Product**
+### ** Product**
 - `POST /api/admin/product` → **(관리자)** 상품 생성
 - `GET /api/product/{productId}` → 상품 ID로 조회
 - `GET /api/products?keyword=&priceMin=&priceMax=&sort=` → 상품 검색
 - `PUT /api/admin/product/{productId}` → **(관리자)** 상품 수정
 - `DELETE /api/admin/product/{productId}` → **(관리자)** 상품 삭제
 
-### **🖼 Product Image**
+### ** Product Image**
 - `POST /api/admin/product-images` → **(관리자)** 상품 이미지 추가
 - `GET /api/product-images?productId={productId}` → 특정 상품의 모든 이미지 조회 (미구현)
 - `PUT /api/admin/product-images/{imageId}` → **(관리자)** 상품 이미지 수정
