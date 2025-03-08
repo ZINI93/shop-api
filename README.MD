@@ -1,40 +1,39 @@
 # ショッピングモール API
 
-このプロジェクトは、商品検索、カート機能、注文および支払い処理ができるシンプルなショッピングモールAPIです。また、管理者ページを通じて商品登録や在庫管理も可能です。現在、Dockerを用いたデプロイ環境を構築中であり、CI/CDパイプラインの自動化も目指しています。
-## 機能
+## 1. **API 概要**
+このプロジェクトは、商品検索、カート機能、注文および支払い処理ができるシンプルなショッピングモールAPIです。また、管理者ページを通じて商品登録や在庫管理も可能です。
 
-### 商品管理
-- 商品の検索および一覧表示
-- 管理者機能：商品登録、編集、削除、および在庫管理
 
-### カート機能
-- 商品をカートに追加、編集、削除
-- ユーザーごとのカート管理
+### **主要機能**
 
-### 注文および支払い
-- 注文作成（モックデータを使った支払い処理）
-- 注文履歴の表示
+- 商品管理 
+- カート機能 
+- 注文および支払い
+- 管理者ページ
 
-### 管理者ページ
-- 商品登録および在庫管理ページ
+### **API バージョン**
+- **バージョン:** `v1.0`
 
-## 技術スタック
-- **バックエンド**: Java, Spring Boot, JPA, MySQL
-- **デプロイ**: Docker
-- **CI/CD**: GitHub Actions
 
-# API 設計
+## 🛠️ 技術スタック
 
-###  Auth
-- **POST /authenticate** → ログイン（JWTトークン発行）
-- **TEST TOKEN 発行**
-    - ID: `user1@example.com`
-    - Password: `12341234`
+- **Backend**: Java, Spring Boot, Spring Security, JPA, QueryDsl
+- **Database**: MySQL
+- **DevOps**: Docker, Docker Compose
+---
+## 2. **認証方式**
+- **認証方法:** `JWTトークン方式`
+- **トークン発行エンドポイント:** `/authenticate`
+- **Googleトークン発行エンドポイント:** `/api/auth/google`
+- **有効時間:** `10時間`
+- ----
+## 3. **エンドポイント一覧**
+
 
 ###  会員
 - **GET /api/member/{memberId}** → 会員IDで情報取得
 - **POST /api/member/join** → 会員登録
-- **PUT /api/member** → 会員情報編集
+- **PUT /api/member/{memberId}** → 会員情報編集
 
 ###  カート
 - **POST /api/cart** → カートに商品を追加
@@ -93,146 +92,7 @@ GET /api/products?page=0&size=10
 - **Product と ProductCategory**: N:1 関係（複数の商品が1つのカテゴリーに属する）
 - **Product と ProductImage**: 1:N 関係（1つの商品が複数の画像を持つ）
 
-
----- 　韓国語　--- 
-
-# 쇼핑몰 API
-
-이 프로젝트는 상품 조회, 장바구니 기능, 주문 및 결제를 처리할 수 있는 간단한 쇼핑몰 API입니다. 또한 관리자 페이지를 통해 상품 등록 및 재고 관리가 가능합니다. 이 프로젝트는 Docker와 Kubernetes를 사용하여 배포할 수 있으며, CI/CD 파이프라인을 GitHub Actions로 자동화합니다.
-
-## 기능
-
-- **상품 관리**
-    - 상품 조회 및 검색
-    - 관리자 기능: 상품 등록, 수정, 삭제 및 재고 관리
-- **장바구니 기능**
-    - 상품을 장바구니에 추가, 수정, 삭제
-    - 사용자별 장바구니 관리
-- **주문 및 결제**
-    - 주문 생성 (Mock 데이터 기반 결제 처리)
-    - 주문 내역 조회
-- **관리자 페이지**
-    - 상품 등록 및 재고 관리 페이지
-
-## 技術スタック
-
-- **백엔드**: Java, Spring Boot, JPA, MySQL
-- **배포**: Docker, Kubernetes
-- **CI/CD**: GitHub Actions
-
-## インストール方法
-
-1. **레포지토리 클론**
-
-   bash
-   git clone https://github.com/yourusername/shop-api.git
-   cd shop-api
-1. 상품 조회 및 검색
-   GET /api/products: 모든 상품 목록을 조회
-   GET /api/products/{id}: 특정 상품의 상세 정보 조회
-   GET /api/products/search: 상품을 검색 (쿼리 파라미터로 필터링 가능)
-2. 장바구니 기능
-   POST /api/cart: 장바구니에 상품 추가
-   GET /api/cart: 사용자의 장바구니 조회
-   PUT /api/cart/{id}: 장바구니에 담긴 상품 수량 수정
-   DELETE /api/cart/{id}: 장바구니에서 상품 제거
-3. 주문 및 결제
-      POST /api/orders: 주문 생성
-      GET /api/orders/{orderId}: 주문 상세 조회
-      GET /api/orders: 사용자의 모든 주문 조회
-4. 관리자 페이지 (상품 관리 및 재고 관리)
-      POST /api/admin/products: 상품 등록
-      PUT /api/admin/products/{id}: 상품 정보 수정
-      DELETE /api/admin/products/{id}: 상품 삭제
-      PUT /api/admin/products/{id}/stock: 상품 재고 수정
-
-테이블 관계 요약
-Member와 Order: 1:N 관계 (1명의 회원은 여러 주문을 할 수 있음)
-Order와 OrderItem: 1:N 관계 (1개의 주문에는 여러 상품이 포함될 수 있음)
-Product와 Cart: 1:N 관계 (하나의 상품은 여러 장바구니에 담길 수 있음)
-Product와 ProductCategory: N:1 관계 (여러 상품이 하나의 카테고리에 속할 수 있음)
-Product와 ProductImage: 1:N 관계 (하나의 상품은 여러 이미지를 가질 수 있음)
-
-
-API 설계
-간소화된 설계에 맞춰 필요한 기본적인 API를 설계합니다.
-
-1. 상품 조회
-   GET /api/products: 모든 상품 조회
-   GET /api/products/{id}: 특정 상품 조회
-2. 장바구니
-   POST /api/cart: 장바구니에 상품 추가
-   GET /api/cart: 장바구니 조회
-   DELETE /api/cart/{id}: 장바구니에서 상품 삭제
-3. 주문
-   POST /api/orders: 주문 생성 (장바구니에서 주문으로 전환)
-   GET /api/orders/{id}: 주문 상세 조회
-4. 결제
-   POST /api/payments: 결제 생성 (주문에 대한 결제 진행)
-   GET /api/payments/{id}: 결제 상태 조회
-
-
- 상품 동적쿼리
-페이징: ?page=0&size=10
-가격 범위: ?minPrice=100&maxPrice=500
-정렬: ?sortField=price
-검색: ?keyword=sample
-
-동적 검색 조건
-✔ 주문 상태 (status)
-✔ 주문 기간 (startDate, endDate)
-✔ 주문 금액 범위 (minAmount, maxAmount)
-✔ 정렬 필드 (sortField)
-
-### ** Auth**
-- `POST /authenticate` → 로그인 (JWT 발급)
-- **TEST TOKEN** 발급 ID: user1@example.com  Password: 12341234
-
-### ** Member**
-- `GET /api/member/{memberId}` → 회원 ID로 조회
-- `POST /api/member/join` → 회원가입
-- `PUT /api/member` → 회원 수정
-
-### ** Cart**
-- `POST /api/cart` → 장바구니에 상품 추가
-- `GET /api/cart/{cartId}` → 장바구니 개별 상품 조회
-- `GET /api/cart` → 장바구니 전체 조회
-- `PUT /api/cart/{cartId}` → 장바구니 상품 수량 변경
-- `DELETE /api/cart/{cartId}` → 장바구니 상품 삭제
-
-### ** Order**
-- `POST /api/orders` → 주문 생성
-- `GET /api/orders/{orderId}` → 주문 ID로 조회
-- `GET /api/orders?status=&startDate=&endDate=&sort=` → **(필터 & 정렬)** 전체 주문 조회
-- `PUT /api/orders/{orderId}` → 주문 수정
-- `DELETE /api/orders/{orderId}` → 주문 삭제
-
-### ** Payment**
-- `POST /api/payment` → 결제 생성
-- `GET /api/payment/{paymentId}` → 결제 ID로 조회
-- `PUT /api/payment/{paymentId}/method` → 결제 방법 수정
-- `PUT /api/payment/{paymentId}/confirm` → 결제 완료 처리
-- `PUT /api/payment/{paymentId}/refund` → 환불 요청
-- `DELETE /api/payment/{paymentId}` → 결제 삭제
-
-### ** Product**
-- `POST /api/admin/product` → **(관리자)** 상품 생성
-- `GET /api/product/{productId}` → 상품 ID로 조회
-- `GET /api/products?keyword=&priceMin=&priceMax=&sort=` → 상품 검색
-- `PUT /api/admin/product/{productId}` → **(관리자)** 상품 수정
-- `DELETE /api/admin/product/{productId}` → **(관리자)** 상품 삭제
-
-### ** Product Image**
-- `POST /api/admin/product-images` → **(관리자)** 상품 이미지 추가
-- `GET /api/product-images?productId={productId}` → 특정 상품의 모든 이미지 조회 (미구현)
-- `PUT /api/admin/product-images/{imageId}` → **(관리자)** 상품 이미지 수정
-- `DELETE /api/admin/product-images/{imageId}` → **(관리자)** 상품 이미지 삭제
-
-### **관리자 관련 API**
-- `GET /api/admin/payment-manege` → 지불 전체 조회
-- `GET /api/admin/memberSearch` → 전체 회원 조회 (전화번호, 이름으로 조회 가능)
-- `DELETE /api/admin/member/{memberId}` → 회원 삭제
-- `POST /api/admin/product` → 상품 등록
-- `PUT /api/admin/product/{productId}` → 상품 수정
-- `DELETE /api/admin/product/{productId}` → 상품 삭제
-
+---
+テスト
+- **Postmanテスト:** `すべてのエンドポイントはPostmanを使用してテストをしました。`
+- **サービス層テスト:** `ビジネスロジックはサービス層で単体テストを行います。各テストはJUnitを使用して作成され、外部の依存関係はMockingを使用して最小限に抑えます。`
