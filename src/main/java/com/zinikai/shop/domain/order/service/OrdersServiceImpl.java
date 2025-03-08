@@ -2,14 +2,22 @@ package com.zinikai.shop.domain.order.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
+import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
+import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
+import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
+import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.entity.ProductImage;
+import com.zinikai.shop.domain.product.repository.ProductImageRepository;
+import com.zinikai.shop.domain.product.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,7 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
+import static com.zinikai.shop.domain.order.entity.QOrders.orders;
+
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -25,53 +37,102 @@ public class OrdersServiceImpl implements OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final MemberRepository memberRepository;
+    private final OrderItemService orderItemService;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
 
-    @Override @Transactional
-    public OrdersResponseDto createOrder(OrdersRequestDto requestDto) {
+    @Override
+    @Transactional
+    public OrdersResponseDto createOrder(Long memberId, OrdersRequestDto requestDto) {
 
-        Member member = memberRepository.findById(requestDto.getMemberId()).orElseThrow(() -> new IllegalArgumentException("会員が登録をされていません"));
+        log.info("Creating order for member ID:{}", memberId);
 
+        Member member = memberRepository.findById(requestDto.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Not found member ID"));
+
+        if (!Objects.equals(member.getId(), memberId)) {
+            throw new IllegalArgumentException("MemberShip IDs do not match");
+        }
+
+        validateAmountAndPaymentMethod(requestDto.getTotalAmount(), requestDto.getPaymentMethod());
 
         Orders orders = Orders.builder()
                 .member(member)
                 .totalAmount(requestDto.getTotalAmount())
-                .status(Status.COMPLETED)
+                .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
                 .build();
-        return ordersRepository.save(orders).toResponseDto();
+
+        Orders savedOrders = ordersRepository.save(orders);
+
+        log.info("Created order: ID={}, MemberID={}, Amount={}",
+                savedOrders.getId(), savedOrders.getMember().getId(), savedOrders.getTotalAmount());
+
+        for (OrderItemRequestDto itemDto : requestDto.getOrderItems() ) {
+            orderItemService.createAndSaveOrderItem(member ,itemDto,savedOrders);
+        }
+        return savedOrders.toResponseDto();
+
     }
 
     @Override
-    public OrdersResponseDto getOrderById(Long orderId) {
-        Orders orders = ordersRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("オーダーがありません。"));
-        return orders.toResponseDto();
+    public Page<OrdersResponseDto> searchOrder(String memberUuid, Status status, LocalDateTime starDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
+
+        log.info("Searching orders for member UUID:{}", memberUuid);
+
+        return ordersRepository.searchOrders(memberUuid, status, starDate, endDate, minAmount, maxAmount, sortField, pageable);
     }
 
     @Override
-    public Page<OrdersResponseDto> searchOrder(Status status, LocalDateTime starDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
-        return ordersRepository.searchOrders(status, starDate,  endDate,  minAmount,  maxAmount, sortField, pageable);
-    }
+    @Transactional
+    public OrdersResponseDto updateOrder(String memberUuid, String orderUuid, OrdersUpdateDto updateDto) {
 
-    @Override @Transactional
-    public OrdersResponseDto updateOrder(Long orderId, OrdersUpdateDto updateDto) {
-        Orders orders = ordersRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("オーダーがありません。"));
+        log.info("Updating order for member UUID:{}, order UUID:{}", memberUuid, orderUuid);
+
+        Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
+
+
+        matchMemberUuid(memberUuid, orders);
+
+        validateAmountAndPaymentMethod(updateDto.getTotalAmount(), updateDto.getPaymentMethod());
 
         orders.UpdateInfo(updateDto.getTotalAmount(),
                 updateDto.getStatus(),
                 updateDto.getPaymentMethod());
 
-        return ordersRepository.save(orders).toResponseDto();
+        log.info("Updated order:{}", orders);
+
+        return orders.toResponseDto();
     }
 
-    @Override @Transactional
-    public void deleteOrder(Long orderId) {
-        if (!ordersRepository.existsById(orderId)){
-            throw  new EntityNotFoundException("オーダーがありません");
+    @Override
+    @Transactional
+    public void deleteOrder(String memberUuid, String orderUuid) {
+
+        log.info("Deleting order for member UUID:{}, order UUID:{}", memberUuid, orderUuid);
+
+        Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
+
+        matchMemberUuid(memberUuid, orders);
+
+        ordersRepository.delete(orders);
+    }
+
+    private void matchMemberUuid(String memberUuid, Orders orders) {
+        if (!Objects.equals(orders.getMember().getMemberUuid(), memberUuid)) {
+            throw new IllegalArgumentException("Member UUId dose not match the order owner");
+        }
+    }
+
+    private void validateAmountAndPaymentMethod(BigDecimal totalAmount, String paymentMethod) {
+        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Price must be greater then or equal 0 en");
         }
 
-        ordersRepository.deleteById(orderId);
-
+        if (paymentMethod == null || paymentMethod.isEmpty()) {
+            throw new IllegalArgumentException("Please choose the payment method");
+        }
     }
 }

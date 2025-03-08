@@ -3,15 +3,10 @@ package com.zinikai.shop.domain.product.repository;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.dsl.Expressions;import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.zinikai.shop.domain.member.dto.MemberResponseDto;
-import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.QProductResponseDto;
-import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.QProduct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,11 +25,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
-
-
     @Override
-    public Page<ProductResponseDto> searchProduct(String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable) {
+    public Page<ProductResponseDto> searchProduct(String ownerUuid, String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable) {
         BooleanExpression predicate = priceRangeCond(minPrice, maxPrice)
+                .and(productOwnerUuidContains(ownerUuid))
                 .and(productNameContains(keyword));
 
         OrderSpecifier<?> sortOrder = getSortOrder(sortField);
@@ -62,6 +56,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
 
         return new PageImpl<>(products, pageable , total);
 
+    }
+
+    private Predicate productOwnerUuidContains(String ownerUuid) {
+        return product.ownerUuid.eq(ownerUuid);
     }
 
 

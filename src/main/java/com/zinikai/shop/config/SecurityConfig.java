@@ -65,9 +65,10 @@ public class SecurityConfig {
                         headerConfig.frameOptions(frameOptionsConfig -> frameOptionsConfig.sameOrigin())
                 )
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/authenticate").permitAll()  // ✅ 로그인은 모두 허용
-                        .requestMatchers("/api/member/join").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/authenticate").permitAll()
+                        .requestMatchers("/api/join").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole(MemberRole.ADMIN.name())
+                        .requestMatchers("/api/**").hasRole(MemberRole.USER.name())
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

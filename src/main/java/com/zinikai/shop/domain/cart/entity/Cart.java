@@ -8,6 +8,8 @@ import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -31,24 +33,26 @@ public class Cart extends TimeStamp {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(name = "cart_uuid",nullable = false, updatable = false,unique = true)
+    private String cartUuid;
+
     @Builder
-    public Cart(Long id, Member member, Product product, Integer quantity) {
-        this.id = id;
+    public Cart(Member member, Product product, Integer quantity, String cartUuid) {
         this.member = member;
         this.product = product;
         this.quantity = quantity;
+        this.cartUuid  = UUID.randomUUID().toString();
     }
 
     public CartResponseDto toResponse() {
         return CartResponseDto.builder()
-                .id(this.id)
                 .memberId(this.member.getId())
                 .productId(this.product.getId())
                 .quantity(this.quantity)
                 .build();
     }
 
-    public void updateInfo(Integer quantity) {
+    public void updateQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 }

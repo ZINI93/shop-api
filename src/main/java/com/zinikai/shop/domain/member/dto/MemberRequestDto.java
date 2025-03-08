@@ -15,8 +15,8 @@ public class MemberRequestDto {
     private String email;
 
     @NotBlank
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,20}$",
-            message = "パスワードは8～20文字で、数字、大文字、小文字、特殊文字を含める必要があります。")
+//    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,20}$",
+//            message = "パスワードは8～20文字で、数字、大文字、小文字、特殊文字を含める必要があります。")
     private String password;
 
     @NotBlank(message = "お名前を入力してください。")

@@ -11,5 +11,5 @@ import java.math.BigDecimal;
 
 public interface ProductRepositoryCustom {
 
-    Page<ProductResponseDto> searchProduct(String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
+    Page<ProductResponseDto> searchProduct(String ownerUuid,String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
 }

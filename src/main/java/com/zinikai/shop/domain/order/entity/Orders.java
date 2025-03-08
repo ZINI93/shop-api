@@ -3,11 +3,15 @@ package com.zinikai.shop.domain.order.entity;
 import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
+import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 
 @Getter
@@ -30,21 +34,27 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     @Column(nullable = false)
     private Status status;
 
+    @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
 
+    @Column(name = "order_uuid",nullable = false,updatable = false,unique = true)
+    private String orderUuid;
+
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
     @Builder
-    public Orders(Long id, Member member , BigDecimal totalAmount, Status status, String paymentMethod) {
-        this.id = id;
+    public Orders(Member member , BigDecimal totalAmount, Status status, String paymentMethod,String orderUuid) {
         this.member = member;
         this.totalAmount = totalAmount;
         this.status = status;
         this.paymentMethod = paymentMethod;
+        this.orderUuid = UUID.randomUUID().toString();
     }
 
     public OrdersResponseDto toResponseDto(){
 
         return OrdersResponseDto.builder()
-                .id(this.id)
                 .memberId(this.member.getId())
                 .totalAmount(this.totalAmount)
                 .status(this.status)
@@ -57,5 +67,10 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
         this.totalAmount = totalAmount;
         this.status = status;
         this.paymentMethod = paymentMethod;
+    }
+
+    public void addOrderItem(OrderItem orderItem){
+        orderItems.add(orderItem);
+        orderItem.setOrders(this);
     }
 }

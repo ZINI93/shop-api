@@ -2,6 +2,7 @@ package com.zinikai.shop.domain.order.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Status;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -13,6 +14,8 @@ import lombok.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class OrdersRequestDto {
@@ -30,9 +33,11 @@ public class OrdersRequestDto {
     @NotBlank(message = "お支払いの方法が必要です。")
     private String paymentMethod;
 
+    private List<OrderItemRequestDto> orderItems;
+
     @Builder
-    public OrdersRequestDto(Long member, BigDecimal totalAmount, Status status, String paymentMethod) {
-        this.memberId = member;
+    public OrdersRequestDto(Long memberId, BigDecimal totalAmount, Status status, String paymentMethod) {
+        this.memberId = memberId;
         this.totalAmount = totalAmount;
         this.status = status;
         this.paymentMethod = paymentMethod;

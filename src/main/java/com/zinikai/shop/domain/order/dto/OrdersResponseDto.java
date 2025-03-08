@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class OrdersResponseDto {
 
     private Long id;
-    private Long memberId;    // order에는 굳이 멤버전체를 참조 받을 필요가 없다
+    private Long memberId;
     private BigDecimal totalAmount;
     private Status status;
     private String paymentMethod;

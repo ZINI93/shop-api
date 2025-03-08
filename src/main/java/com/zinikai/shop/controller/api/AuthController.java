@@ -1,6 +1,9 @@
 package com.zinikai.shop.controller.api;
 
 import com.zinikai.shop.util.JwtUtil;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,23 +15,20 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestController
 @Slf4j
+@RequiredArgsConstructor
+@RestController
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-    }
 
     @PostMapping("/authenticate")
     public Map<String, String> createAuthenticationToken(@RequestBody AuthRequest authRequest) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(authRequest.getEmail(),authRequest.getPassword())
             );
         } catch (AuthenticationException e) {
             throw new RuntimeException("Invalid credentials");
@@ -40,14 +40,10 @@ public class AuthController {
         return response;
     }
 }
-
+@Getter
+@Setter
 class AuthRequest {
     private String email;
     private String password;
 
-    // Getters and Setters
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
 }

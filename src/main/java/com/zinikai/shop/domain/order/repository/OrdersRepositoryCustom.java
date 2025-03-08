@@ -12,7 +12,8 @@ public interface OrdersRepositoryCustom {
 
     // 주문 시간 순서, 멤버 - 주문검색 left join, 페이징,
 
-    Page<OrdersResponseDto> searchOrders(Status status,
+    Page<OrdersResponseDto> searchOrders(String memberUuid,
+                                         Status status,
                                          LocalDateTime startDate,
                                          LocalDateTime endDate,
                                          BigDecimal minAmount,

@@ -1,49 +1,78 @@
 package com.zinikai.shop.controller.api;
 
+import com.zinikai.shop.domain.member.service.CustomUserDetails;
 import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/payment")
+@RequestMapping("/api/payments")
 public class PaymentApiController {
 
     private final PaymentService paymentService;
 
-    // payment 생성 - POSTMEN TEST 完了
+    // payment 생성
 
     @PostMapping
-    public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto requestDto){
-        PaymentResponseDto savedPayment = paymentService.createPayment(requestDto);
+    public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto requestDto,
+                                                            Authentication authentication){
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        Long memberId = customUserDetails.getMemberId();
+
+        PaymentResponseDto savedPayment = paymentService.createPayment(memberId,requestDto);
+
         URI location = URI.create("/api/payments/" + savedPayment.getId());
         return ResponseEntity.created(location).body(savedPayment);
     }
     // product IDで探す- POSTMEN TEST 完了
-    @GetMapping("{paymentId}")
-    public ResponseEntity<PaymentResponseDto> findByPaymentId(@PathVariable Long paymentId){
-        PaymentResponseDto paymentById = paymentService.getPaymentById(paymentId);
-        return ResponseEntity.ok(paymentById);
+    @GetMapping
+    public ResponseEntity<Page<PaymentResponseDto>> getPayments(Authentication authentication,
+                                                                @PageableDefault(size = 10,page = 0)Pageable pageable) {
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        Page<PaymentResponseDto> payments = paymentService.getPayments(memberUuid, pageable);
+        return ResponseEntity.ok(payments);
     }
 
     // product アップデート- POSTMEN TEST 完了
-    @PutMapping("{paymentId}")
-    public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable Long paymentId,
+    @PutMapping("{paymentUuId}")
+    public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable String paymentUuId,
+                                                          Authentication authentication,
                                                           @RequestBody PaymentUpdateDto updateDto){
-        PaymentResponseDto paymentResponseDto = paymentService.updatePayment(paymentId, updateDto);
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        PaymentResponseDto paymentResponseDto = paymentService.updatePayment(memberUuid, paymentUuId, updateDto);
         return ResponseEntity.ok(paymentResponseDto);
     }
+
     // product 削除- POSTMEN TEST 完了
-    @DeleteMapping("{paymentId}")
-    public ResponseEntity<Void> deletePayment(@PathVariable Long paymentId){
-        paymentService.deletePayment(paymentId);
+    @DeleteMapping("{paymentUuid}")
+    public ResponseEntity<Void> deletePayment(@PathVariable String paymentUuid,
+                                              Authentication authentication){
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        paymentService.deletePayment(memberUuid,paymentUuid);
        return ResponseEntity.noContent().build();
     }
 
+    private static CustomUserDetails getCustomUserDetails(Authentication authentication) {
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        return customUserDetails;
+    }
 }

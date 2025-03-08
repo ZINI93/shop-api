@@ -6,6 +6,8 @@ import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,16 +25,23 @@ public class Payment extends TimeStamp {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+
     @Column(nullable = false)
     private String paymentMethod;
 
+    @Column(name = "owner_uuid", nullable = false , updatable = false)
+    private String ownerUuid;
+
+    @Column(name = "payment_uuid", unique = true, nullable = false , updatable = false)
+    private String paymentUuid;
 
     @Builder
-    public Payment(Long id, Orders orders, PaymentStatus status, String paymentMethod) {
-        this.id = id;
+    public Payment( Orders orders, PaymentStatus status, String paymentMethod,String ownerUuid, String paymentUuid) {
         this.orders = orders;
         this.status = status;
         this.paymentMethod = paymentMethod;
+        this.ownerUuid = ownerUuid;
+        this.paymentUuid = UUID.randomUUID().toString();
     }
 
     public PaymentResponseDto toResponse(){

@@ -5,6 +5,8 @@ import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -16,13 +18,13 @@ public class Member extends TimeStamp {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String email;  // login Id 활용
+    private String email;
+
+    @Column(nullable = true)
+    private String password;
 
     @Column(nullable = false)
-    private String password; // 비밀번호
-
-    @Column(nullable = false)
-    private String name; // 이름
+    private String name;
 
     @Column(nullable = false, unique = true,name = "phone_number")
     private String phoneNumber;
@@ -34,20 +36,22 @@ public class Member extends TimeStamp {
     @Enumerated(EnumType.STRING)
     private MemberRole role;
 
+    @Column(name = "member_uuid",unique = true, nullable = false, updatable = false)
+    private String memberUuid;
+
     @Builder
-    public Member(Long id, String email, String password, String name, String phoneNumber, Address address, MemberRole role) {
-        this.id = id;
+    public Member(String email, String password, String name, String phoneNumber, Address address, MemberRole role, String memberUuid) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.role = role;
+        this.memberUuid = UUID.randomUUID().toString();
     }
 
     public MemberResponseDto toResponseDto() {
         return MemberResponseDto.builder()
-                .id(this.id)
                 .email(this.email)
                 .name(this.name)
                 .phoneNumber(this.phoneNumber)
@@ -55,8 +59,7 @@ public class Member extends TimeStamp {
                 .role(this.role)
                 .build();
     }
-
-
+    
     //アップデート
     public void updateInfo(String password, String name, String phoneNumber, Address address) {
         this.password = password;

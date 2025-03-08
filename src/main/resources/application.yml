@@ -3,13 +3,14 @@ spring:
   application:
     name: zini-shop
   datasource:
-    url: jdbc:mysql://localhost:3307/zini_shop?zeroDateTimeBehavior=convertToNull&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: zini_show_user
-    password: 
+    url: jdbc:mysql://localhost:3307/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
   batch:
     jdbc:
       initialize-schema: always
-
+jwt:
+  secret: ${JWT_SECRET_KEY}

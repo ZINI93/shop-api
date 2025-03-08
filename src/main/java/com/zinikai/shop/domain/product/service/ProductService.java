@@ -4,6 +4,7 @@ import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.entity.ProductImage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,13 +13,11 @@ import java.util.List;
 
 public interface ProductService {
 
-    ProductResponseDto createProduct(ProductRequestDto productRequestDto);
+    ProductResponseDto createProduct(Long memberId, ProductRequestDto productRequestDto);
 
-    ProductResponseDto getProductById(Long productId);
+    Page<ProductResponseDto>  searchProducts(String ownerUuid,String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
 
-    Page<ProductResponseDto>  searchProducts(String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
+    ProductResponseDto updateProduct(String ownerUuid, String productUuid, ProductUpdateDto updateDto);
 
-    ProductResponseDto updateProduct(Long productId, ProductUpdateDto updateDto);
-
-    void deleteProduct(Long productId);
+    void deleteProduct(String ownerUuid,String productUuid);
 }

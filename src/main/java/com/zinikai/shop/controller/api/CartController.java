@@ -4,58 +4,77 @@ import com.zinikai.shop.domain.cart.dto.CartRequestDto;
 import com.zinikai.shop.domain.cart.dto.CartResponseDto;
 import com.zinikai.shop.domain.cart.dto.CartUpdateDto;
 import com.zinikai.shop.domain.cart.service.CartService;
+import com.zinikai.shop.domain.member.service.CustomUserDetails;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
 
 
-@RequestMapping("/api/cart")
+@RequestMapping("/api/carts")
 @RequiredArgsConstructor
 @RestController
 public class CartController {
 
     private final CartService cartService;
 
-
-    //カートに追加 - POSTMEN TEST 完了
     @PostMapping
-    public ResponseEntity<CartResponseDto> createCart(@RequestBody CartRequestDto requestDto){
-        CartResponseDto cart = cartService.createCart(requestDto);
+    public ResponseEntity<CartResponseDto> createCart(@RequestBody CartRequestDto requestDto,
+                                                      Authentication authentication) {
+        CustomUserDetails customUserDetails = getPrincipal(authentication);
+        Long memberId = customUserDetails.getMemberId();
+
+        CartResponseDto cart = cartService.createCart(memberId, requestDto);
         URI location = URI.create("/api/cart/" + cart.getId());
-        return  ResponseEntity.created(location).body(cart);
+        return ResponseEntity.created(location).body(cart);
     }
 
-    //カートを照会 - POSTMEN TEST 完了
-    @GetMapping("{cartId}")
-    public ResponseEntity<CartResponseDto> findById(@PathVariable Long cartId){
-        CartResponseDto cart = cartService.findById(cartId);
-        return  ResponseEntity.ok(cart);
-    }
-
-    //メンバー別、カートの商品のリスト　ー- POSTMEN TEST 完了
     @GetMapping
-    public ResponseEntity<List<CartResponseDto>> findAllByMember(){
-        List<CartResponseDto> carts = cartService.getAllCart();
+    public ResponseEntity<Page<CartResponseDto>> getCarts(Authentication authentication,
+                                                          @PageableDefault(size = 10, page = 0) Pageable pageable) {
+
+        CustomUserDetails customUserDetails = getPrincipal(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        Page<CartResponseDto> carts = cartService.getCarts(memberUuid, pageable);
+
         return ResponseEntity.ok(carts);
     }
 
+    @PutMapping("{cartUuid}")
+    public ResponseEntity<CartResponseDto> editCart(@PathVariable String cartUuid,
+                                                    Authentication authentication,
+                                                    @RequestBody CartUpdateDto updateDto) {
 
-    //カートをアップデート ー- POSTMEN TEST 完了
-    @PutMapping("{cartId}")
-    public ResponseEntity<CartResponseDto> editCart(@PathVariable Long cartId,
-                                                    @RequestBody CartUpdateDto updateDto){
-        CartResponseDto updateCart = cartService.updateCart(cartId, updateDto);
-        return  ResponseEntity.ok(updateCart);
+        CustomUserDetails customUserDetails = getPrincipal(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        CartResponseDto updateCart = cartService.updateCart(memberUuid, cartUuid, updateDto);
+
+        return ResponseEntity.ok(updateCart);
     }
 
-    //カートを削除 ー- POSTMEN TEST 完了
-    @DeleteMapping("{cartId}")
-    public ResponseEntity<Void> deleteCart(@PathVariable Long cartId){
-        cartService.deleteCart(cartId);
+    @DeleteMapping("{cartUuid}")
+    public ResponseEntity<Void> deleteCart(@PathVariable String cartUuid,
+                                           Authentication authentication) {
+
+        CustomUserDetails customUserDetails = getPrincipal(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        cartService.deleteCart(memberUuid, cartUuid);
+
         return ResponseEntity.noContent().build();
+    }
+
+    private static CustomUserDetails getPrincipal(Authentication authentication) {
+        return (CustomUserDetails) authentication.getPrincipal();
     }
 }

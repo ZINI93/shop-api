@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -13,9 +14,10 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    //실제 서비스에서는 환경 변수로 관리
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256); // HS256을 위한 키 생성
-
+    private final SecretKey SECRET_KEY;
+    public JwtUtil(@Value("${jwt.secret}") String secretKey) {
+        this.SECRET_KEY = Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
     //토큰생성
     public String generateToken(String email){
         return Jwts.builder()
@@ -36,7 +38,6 @@ public class JwtUtil {
         final String extractEmail = extractEmail(token);
         return (email.equals(extractEmail) && !isTokenExpired(token));
     }
-
 
     // 최신버전 x
 

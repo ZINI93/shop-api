@@ -5,14 +5,15 @@ import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.entity.Payment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface PaymentService {
 
-    PaymentResponseDto createPayment(PaymentRequestDto requestDto);
-    PaymentResponseDto getPaymentById(Long paymentId);
-    List<PaymentResponseDto> getAllPayment();
-    PaymentResponseDto updatePayment(Long paymentId, PaymentUpdateDto updateDto);
-    void deletePayment(Long paymentId);
+    PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto);
+    Page<PaymentResponseDto> getPayments(String ownerUuid, Pageable pageable);
+    PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid , PaymentUpdateDto updateDto);
+    void deletePayment(String ownerUuid, String paymentUuid);
 }

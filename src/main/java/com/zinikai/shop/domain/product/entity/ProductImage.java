@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,11 +26,18 @@ public class ProductImage extends TimeStamp {
 
     private String imageUrl;
 
+    @Column(name = "owner_uuid", nullable = false)
+    private String ownerUuid;
+
+    @Column(name = "product_image_uuid", nullable = false, updatable = false, unique = true)
+    private String productImageUuid;
+
     @Builder
-    public ProductImage(Long id, Product product, String imageUrl) {
-        this.id = id;
+    public ProductImage(Product product, String imageUrl, String ownerUuid, String productImageUuid) {
         this.product = product;
         this.imageUrl = imageUrl;
+        this.ownerUuid = ownerUuid;
+        this.productImageUuid = UUID.randomUUID().toString();
     }
 
     public ProductImageResponseDto toResponse() {
@@ -42,4 +51,5 @@ public class ProductImage extends TimeStamp {
     public void updateInfo(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
 }

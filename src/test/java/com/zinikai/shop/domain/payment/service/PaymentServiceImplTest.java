@@ -1,26 +1,29 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
-import com.zinikai.shop.domain.order.service.OrdersService;
 import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
-import org.hibernate.sql.ast.tree.expression.CaseSimpleExpression;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.internal.matchers.Any;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
-import java.util.Collections;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,102 +33,136 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
 
-    @InjectMocks PaymentServiceImpl paymentService;
-    @Mock PaymentRepository paymentRepository;
+    @InjectMocks
+    PaymentServiceImpl paymentService;
 
-    @Mock OrdersRepository ordersRepository;
+    @Mock
+    PaymentRepository paymentRepository;
+
+    @Mock
+    OrdersRepository ordersRepository;
+
+    @Mock
+    MemberRepository memberRepository;
 
     PaymentRequestDto requestDto;
-    Payment testPayment;
+    Payment payment;
+    Member member;
 
-    Orders orderId;
+    Orders orders;
+
+    private void setMemberId(Member member, Long id) throws Exception {
+        Field field = member.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(member, id);
+    }
+
+    private void setOrdersId(Orders orders, Long id) throws Exception {
+        Field field = orders.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(orders, id);
+    }
+    private void setPaymentId(Payment payment, Long id) throws Exception {
+        Field field = payment.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(payment, id);
+    }
+
+
     @BeforeEach
-    void setup(){
+    void setup() throws Exception {
 
-        Long paymentId = 1L;
-        orderId = Orders.builder().id(2L).build();
+        member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
+        setMemberId(member, 1L);
 
-        requestDto = new PaymentRequestDto(2L, PaymentStatus.COMPLETED, "PayPay" );
+        orders = Orders.builder().build();
+        setOrdersId(orders, 1L);
 
-        testPayment = new Payment(paymentId, orderId ,requestDto.getStatus(),requestDto.getPaymentMethod());
+        payment = new Payment(
+                orders,
+                PaymentStatus.COMPLETED,
+                "PayPay",
+                member.getMemberUuid(),
+                UUID.randomUUID().toString()
+        );
+        setPaymentId(payment,1L);
+
+        requestDto = new PaymentRequestDto(
+                payment.getOrders().getId(),
+                payment.getStatus(),
+                payment.getPaymentMethod()
+        );
 
     }
 
     @Test
-    void createPayment(){
+    void createPayment() {
         //given
 
-        when(ordersRepository.findById(2L)).thenReturn(Optional.of(orderId));
-        when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
+        when(memberRepository.findById(member.getId())).thenReturn(Optional.ofNullable(member));
+        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
+        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 
         //when
-        PaymentResponseDto result = paymentService.createPayment(requestDto);
+        PaymentResponseDto result = paymentService.createPayment(member.getId(), requestDto);
 
         //then
         assertNotNull(result);
-        assertEquals(2L, result.getOrderId());
-        assertEquals("PayPay",result.getPaymentMethod());
+        assertEquals(1L, result.getOrderId());
+        assertEquals("PayPay", result.getPaymentMethod());
 
         verify(paymentRepository, times(1)).save(any(Payment.class));
     }
 
     @Test
-    void TestFindById(){
+    void TestPayments() {
         //given
-        when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        List<PaymentResponseDto> mockData = List.of(payment.toResponse());
+        Page<PaymentResponseDto> mockPage = new PageImpl<>(mockData, pageable, mockData.size());
+
+        when(paymentRepository.findAllByOwnerUuid(member.getMemberUuid(),pageable)).thenReturn(mockPage);
         //when
-        PaymentResponseDto result = paymentService.getPaymentById(1L);
+        Page<PaymentResponseDto> payments = paymentService.getPayments(member.getMemberUuid(), pageable);
 
         //then
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
+        assertNotNull(payments);
+        assertEquals(10, payments.getSize());
 
-        verify(paymentRepository,times(1)).findById(1L);
+        verify(paymentRepository, times(1)).findAllByOwnerUuid(member.getMemberUuid(),pageable);
 
     }
 
-
     @Test
-    void TestFindAll(){
+    void updatePayment() {
 
         //given
-        List<Payment> paymentList = Collections.singletonList(testPayment);
-        when(paymentRepository.findAll()).thenReturn(List.of(testPayment));
+        when(paymentRepository.findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
+
+        PaymentUpdateDto updatePayment = PaymentUpdateDto.builder()
+                .paymentMethod("CASH")
+                .status(PaymentStatus.REFUNDED)
+                .build();
+
         //when
-        List<PaymentResponseDto> result = paymentService.getAllPayment();
+        PaymentResponseDto result = paymentService.updatePayment(member.getMemberUuid(),payment.getPaymentUuid(),updatePayment);
 
         //then
         assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(paymentRepository, times(1)).findAll();
+        assertEquals(updatePayment.getPaymentMethod(), result.getPaymentMethod());
+        assertEquals(updatePayment.getStatus(), result.getStatus());
+        verify(paymentRepository,times(1)).findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
     }
 
     @Test
-    void updatePayment(){
-
+    void deletePayment() {
         //given
-        PaymentUpdateDto paymentUpdateDto = new PaymentUpdateDto(PaymentStatus.PENDING, requestDto.getPaymentMethod());
-//        when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-        when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
-        //when
-        PaymentResponseDto result = paymentService.updatePayment(1L, paymentUpdateDto);
-
-        //then
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(PaymentStatus.PENDING,result.getStatus());
-//        verify(paymentRepository,times(1)).save(any(Payment.class));
-    }
-
-    @Test
-    void deletePayment(){
-        //given
-        when(paymentRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(paymentRepository).deleteById(1L);
+        when(paymentRepository.findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
 
         //when
-        paymentService.deletePayment(1L);
+        paymentService.deletePayment(member.getMemberUuid(), payment.getPaymentUuid());
         //then
-        verify(paymentRepository, times(1)).deleteById(1L);
+        verify(paymentRepository,times(1)).findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
     }
 }

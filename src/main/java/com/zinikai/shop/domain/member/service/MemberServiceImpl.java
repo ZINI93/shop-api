@@ -6,28 +6,23 @@ import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.entity.MemberRole;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
-public class MemberServiceImpl implements MemberService{
+public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-
-    /**
-     * 会員登録
-     */
 
     @Override
     @Transactional
@@ -44,74 +39,71 @@ public class MemberServiceImpl implements MemberService{
                 .role(MemberRole.USER)
                 .build();
 
+        log.info("Created savedMember:{}", member);
+
         return memberRepository.save(member).toResponseDto();
     }
 
-    /**
-     * 会員IDで探す
-     */
+
     @Override
-    public MemberResponseDto getMemberById(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("idが見つかりません"));
+    public MemberResponseDto getMemberUuid(String memberUuid) {
+
+        log.info("Searching member for member UUID:{}", memberUuid);
+
+        Member member = getUuid(memberUuid);
+
         return member.toResponseDto();
-
-    }
-
-
-    /**
-     * 会員全部探す
-     */
-    @Override
-    public List<MemberResponseDto> getAllMembers() {
-        List<Member> members = memberRepository.findAll();
-
-        if (members.isEmpty()){
-            throw new IllegalArgumentException("メンバーが見つかりません");
-        }
-        return members.stream()
-                .map(Member::toResponseDto)
-                .collect(Collectors.toList());
     }
 
     /**
-     *  会員名前や電話番号で探す
+     * 管理者のサーチ機能
      */
 
     @Override
     public Page<MemberResponseDto> getNameAndPhoneNumber(String name, String phoneNumber, Pageable pageable) {
         return memberRepository.findByNameAndPhoneNumber(name, phoneNumber, pageable);
-
     }
 
+    @Override
+    @Transactional
+    public MemberResponseDto updateMember(String memberUuid, MemberUpdateDto updateDto) {
 
-    /**
-     * 会員アップデート
-     */
-    @Override @Transactional
-    public MemberResponseDto updateMember(Long memberId, MemberUpdateDto updateDto) {
-        Member member= memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("メンバーが見つかりません"));
+        log.info("Updating member for member UUID:{}", memberUuid);
 
+        Member member = getUuid(memberUuid);
 
-       member.updateInfo(
-               passwordEncoder.encode(updateDto.getPassword()),
-               updateDto.getName(),
-               updateDto.getPhoneNumber(),
-               updateDto.getAddress()
-       );
+        String encodedPassword = updateDto.getPassword() != null ?
+                passwordEncoder.encode(updateDto.getPassword()) :
+                member.getPassword();
+
+        member.updateInfo(
+                encodedPassword,
+                updateDto.getName(),
+                updateDto.getPhoneNumber(),
+                updateDto.getAddress()
+        );
+
+        log.info("updated member:{}", member);
 
         return member.toResponseDto();
     }
 
-    /**
-     *  会員削除
-     */
-    @Override @Transactional
-    public void deleteMember(Long memberId) {
-        if (!memberRepository.existsById(memberId)){
-            throw new EntityNotFoundException("メンバーが見つかりません");
-        }
-        memberRepository.deleteById(memberId);
+    @Override
+    @Transactional
+    public void deleteMember(String memberUuid) {
+
+        log.info("Deleting member for member UUID:{} ", memberUuid);
+
+        Member member = getUuid(memberUuid);
+
+        memberRepository.delete(member);
+    }
+
+    private Member getUuid(String memberUuid) {
+        return memberRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> {
+                    log.error("Member not found for UUID: {}", memberUuid);
+                    return new IllegalArgumentException("Not found member UUID");
+                });
     }
 }

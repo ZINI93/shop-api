@@ -16,11 +16,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,102 +33,129 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 
-    @Mock MemberRepository memberRepository;
-    @Mock OrdersRepository ordersRepository;
+    @Mock
+    MemberRepository memberRepository;
+    @Mock
+    OrdersRepository ordersRepository;
 
-    @InjectMocks
-    OrdersServiceImpl orderService;
+    @InjectMocks OrdersServiceImpl orderService;
 
     OrdersRequestDto ordersRequest;
 
     Orders orders;
+
+    Member member;
+
+    private void setMemberId(Member member, Long id) throws Exception {
+        Field field = member.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(member, id);
+    }
+
+    private void setOrdersId(Orders orders, Long id) throws Exception {
+        Field field = orders.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(orders, id);
+    }
+
     @BeforeEach
-    void setup(){
-        ordersRequest = new OrdersRequestDto(
-                Member.builder().id(1L).build().getId(),
-                new BigDecimal(10),
-                Status.COMPLETED,
-                "PayPay"
-        );
+    void setup() throws Exception {
+
+        member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
+        setMemberId(member, 1L);
 
         orders = new Orders(
-                1L,
-                Member.builder().id(1L).build(),
+                member,
                 new BigDecimal(10),
                 Status.COMPLETED,
-                "PayPay"
+                "PayPay",
+                UUID.randomUUID().toString()
+        );
+        setOrdersId(orders, 1L);
+
+        ordersRequest = new OrdersRequestDto(
+                orders.getMember().getId(),
+                orders.getTotalAmount(),
+                orders.getStatus(),
+                orders.getPaymentMethod()
         );
 
     }
-    @Test
-    @DisplayName("오더 생성 테스트")
-    void TestCreateOrder(){
-        //given
-        Member memberId = Member.builder().id(1L).build();
 
-        when(memberRepository.findById(1L)).thenReturn(Optional.of(memberId));
+    @Test
+    @DisplayName("オーダーを作成")
+    void TestCreateOrder() {
+        //given
+
+        when(memberRepository.findById(1L)).thenReturn(Optional.ofNullable(member));
         when(ordersRepository.save(any(Orders.class))).thenReturn(orders);
 
         //when
-        OrdersResponseDto result = orderService.createOrder(ordersRequest);
+        OrdersResponseDto result = orderService.createOrder(member.getId(),ordersRequest);
 
 
         //then
         assertNotNull(result);
-        assertEquals(1L,orders.getId());
+        assertEquals(1L, orders.getId());
         assertEquals("PayPay", orders.getPaymentMethod());
 
-        verify(ordersRepository,times(1)).save(any(Orders.class));
+        verify(ordersRepository, times(1)).save(any(Orders.class));
     }
 
-    @Test
-    @DisplayName("IDで探す")
-    void TestFindById(){
-        //given
-
-        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
-        //when
-        OrdersResponseDto result = orderService.getOrderById(1L);
-
-        //then
-        assertNotNull(result);
-        assertEquals(orders.getMember().getId(),result.getMemberId());
-        verify(ordersRepository, times(1)).findById(1L);
-    }
 
     @Test
     @DisplayName("オーダーをサーチ")
-    void TestSearch(){
+    void TestSearch() {
         //given
 
-        PageRequest pageable = PageRequest.of(0, 10);
+        String sortFiled = "createAt";
 
-        Status status = Status.COMPLETED;
-        LocalDateTime startDate = LocalDateTime.now().minusDays(1);
-        LocalDateTime endDate = LocalDateTime.now();
-        BigDecimal minAmount = new BigDecimal(100);
-        BigDecimal maxAmount = new BigDecimal(1000);
-        String sortFiled = "createdAt";
+        PageRequest pageable = PageRequest.of(0, 10);
+        List<OrdersResponseDto> mockOrders = List.of(orders.toResponseDto());
+        Page<OrdersResponseDto> mockOrder = new PageImpl<>(mockOrders, pageable, mockOrders.size());
+
 
         // 偽物データをRETURN設定
         Page<OrdersResponseDto> mockOrderpage = mock(Page.class);
-        when(ordersRepository.searchOrders(eq(status),eq(startDate),eq(endDate),eq(minAmount),eq(maxAmount),eq(sortFiled),eq(pageable)))
+        when(ordersRepository.searchOrders(
+                member.getMemberUuid(),
+                eq(orders.getStatus()),
+                eq(LocalDateTime.now().minusDays(1)),
+                eq(LocalDateTime.now()),
+                eq(new BigDecimal(100)),
+                eq(new BigDecimal(1000)),
+                eq(sortFiled),
+                eq(pageable)))
                 .thenReturn(mockOrderpage);
 
-
         //when
-        Page<OrdersResponseDto> result = orderService.searchOrder(status, startDate, endDate, minAmount, maxAmount, sortFiled, pageable);
+        Page<OrdersResponseDto> result = orderService.searchOrder(
+                member.getMemberUuid(),
+                orders.getStatus(),
+                orders.getCreatedAt(),
+                orders.getUpdatedAt(),
+                orders.getTotalAmount(),
+                orders.getTotalAmount(),
+                sortFiled,
+                pageable);
 
         //then
         assertNotNull(result);
-        assertEquals(mockOrderpage,result);
-        verify(ordersRepository,times(1)).searchOrders(eq(status),eq(startDate),eq(endDate),eq(minAmount),eq(maxAmount),eq(sortFiled),eq(pageable));
+        assertEquals(mockOrderpage, result);
+        verify(ordersRepository, times(1)).searchOrders(member.getMemberUuid(),
+                eq(orders.getStatus()),
+                eq(LocalDateTime.now().minusDays(1)),
+                eq(LocalDateTime.now()),
+                eq(new BigDecimal(100)),
+                eq(new BigDecimal(1000)),
+                eq(sortFiled),
+                eq(pageable));
 
     }
 
     @Test
     @DisplayName("オーダーをアップデート")
-    void TestOrderUpdate(){
+    void TestOrderUpdate() {
         //given
 
         OrdersUpdateDto updateOrder = OrdersUpdateDto.builder()
@@ -134,30 +165,29 @@ class OrderServiceImplTest {
                 .build();
 
 
-        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
-        when(ordersRepository.save(any(Orders.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ordersRepository.findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid())).thenReturn(Optional.ofNullable(orders));
 
         //when
-        OrdersResponseDto result = orderService.updateOrder(1L, updateOrder);
+        OrdersResponseDto result = orderService.updateOrder(member.getMemberUuid(),orders.getOrderUuid(),updateOrder);
 
         //then
         assertNotNull(result);
-        assertEquals(orders.getTotalAmount(),result.getTotalAmount());
-        assertEquals(orders.getPaymentMethod(),result.getPaymentMethod());
+        assertEquals(orders.getTotalAmount(), result.getTotalAmount());
+        assertEquals(orders.getPaymentMethod(), result.getPaymentMethod());
 
-        verify(ordersRepository,times(1)).findById(1L);
+        verify(ordersRepository, times(1)).findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid());
     }
 
     @Test
     @DisplayName("オーダーを削除")
-    void TestDeleteOrder(){
+    void TestDeleteOrder() {
         //given
-        when(ordersRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(ordersRepository).deleteById(1L);
+        when(ordersRepository.findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid())).thenReturn(Optional.ofNullable(orders));
+
         //when
-        orderService.deleteOrder(1L);
+        orderService.deleteOrder(member.getMemberUuid(),orders.getOrderUuid());
         //then
-        verify(ordersRepository,times(1)).deleteById(1L);
+        verify(ordersRepository, times(1)).findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid());
     }
 
 

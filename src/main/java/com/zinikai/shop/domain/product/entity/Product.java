@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @ToString
 @Getter
@@ -29,19 +30,25 @@ public class Product extends TimeStamp {
     @Column(nullable = false)
     private Integer stock;
 
+    @Column(name = "product_uuid",nullable = false,updatable = false,unique = true)
+    private String productUuid;
+
+    @Column(name = "owner_uuid",nullable = false, updatable = false)
+    private String ownerUuid;
+
     @Builder
-    public Product(Long id, String name, BigDecimal price, String description, Integer stock) {
-        this.id = id;
+    public Product(String name, BigDecimal price, String description, Integer stock,String productUuid,String ownerUuid) {
         this.name = name;
         this.price = price;
         this.description = description;
         this.stock = stock;
+        this.productUuid = UUID.randomUUID().toString();
+        this.ownerUuid = ownerUuid;
     }
 
     public ProductResponseDto toResponseDto(){
 
         return ProductResponseDto.builder()
-                .id(this.id)
                 .name(this.name)
                 .price(this.price)
                 .description(this.description)
@@ -55,6 +62,7 @@ public class Product extends TimeStamp {
         this.description = description;
         this.stock = stock;
     }
+
 }
 
 

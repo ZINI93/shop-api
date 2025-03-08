@@ -1,5 +1,7 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
@@ -7,69 +9,105 @@ import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
+import com.zinikai.shop.domain.payment.entity.QPayment;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.zinikai.shop.domain.payment.entity.QPayment.payment;
+
+@Slf4j
 @Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
+    private final MemberRepository memberRepository;
     private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
-    @Override @Transactional
-    public PaymentResponseDto createPayment(PaymentRequestDto requestDto) {
 
-        Orders orderId = ordersRepository.findById(requestDto.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("オーダーがありません。"));
+    /**
+     * お支払いを作成
+     */
+
+    @Override
+    @Transactional
+    public PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto) {
+
+        log.info("Creating payment for member ID:{}", memberId);
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: "+ memberId));
+
+        Orders order = ordersRepository.findById(requestDto.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + requestDto.getOrderId()));
 
         Payment payment = Payment.builder()
-                .orders(orderId)
+                .orders(order)
                 .status(PaymentStatus.COMPLETED)
                 .paymentMethod(requestDto.getPaymentMethod())
+                .ownerUuid(member.getMemberUuid())
                 .build();
+
+        log.info("Created payment:{}", payment);
+
         return paymentRepository.save(payment).toResponse();
+
     }
+
     @Override
-    public PaymentResponseDto getPaymentById(Long paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("paymentがありません"));
-        return payment.toResponse();
+    public Page<PaymentResponseDto> getPayments(String ownerUuid, Pageable pageable) {
+
+        log.info("Searching payment for owner UUID :{}", ownerUuid);
+
+        return paymentRepository.findAllByOwnerUuid(ownerUuid, pageable);
     }
 
-    @Override  //ADMIN用
-    public List<PaymentResponseDto> getAllPayment() {
-        List<Payment> payments = paymentRepository.findAll();
-        if (payments.isEmpty()){
-            throw new IllegalArgumentException("paymentがありません");
-        }
-        return payments.stream()
-                .map(Payment::toResponse)
-                .collect(Collectors.toList());
-    }
+    @Override
+    @Transactional
+    public PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid, PaymentUpdateDto updateDto) {
 
-    @Override @Transactional
-    public PaymentResponseDto updatePayment(Long paymentId, PaymentUpdateDto updateDto) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("paymentがありません"));
+        log.info("Updating payment for Owner UUID :{}, Payment UUID:{}", ownerUuid, paymentUuid);
+
+        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+
+        matchOwnerUuid(ownerUuid, payment);
 
         payment.updateInfo(updateDto.getStatus(), updateDto.getPaymentMethod());
 
-//        return paymentRepository.save(payment).toResponse();
+        log.info("updated payment:{}", payment);
+
         return payment.toResponse();
     }
 
-    @Override @Transactional
-    public void deletePayment(Long paymentId) {
-        if (!paymentRepository.existsById(paymentId)){
-            throw new EntityNotFoundException("paymentがありません");
+    @Override
+    @Transactional
+    public void deletePayment(String ownerUuid, String paymentUuid) {
+
+        log.info("Deleting payment for owner UUID:{}", ownerUuid);
+
+        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+
+        matchOwnerUuid(ownerUuid, payment);
+
+        paymentRepository.delete(payment);
+    }
+
+    private static void matchOwnerUuid(String ownerUuid, Payment payment) {
+        if (!Objects.equals(payment.getOwnerUuid(), ownerUuid)) {
+            throw new IllegalArgumentException("Owner UUID not match payment owner");
         }
-        paymentRepository.deleteById(paymentId);
     }
 }

@@ -16,107 +16,120 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceImplTest {
 
-    @Mock CartRepository cartRepository;
+    @Mock private CartRepository cartRepository;
+    @Mock private MemberRepository memberRepository;
+    @Mock private ProductRepository productRepository;
+    @InjectMocks private CartServiceImpl cartService;
+    CartRequestDto cartRequest;
+    Member member;
 
-    @Mock MemberRepository memberRepository;
-
-    @Mock ProductRepository productRepository;
-    @InjectMocks CartServiceImpl cartService;
-
-    CartRequestDto requestDto;
-
+    Product product;
     Cart cart;
-    @BeforeEach
-     void setup(){
 
-       Long memberId = 1L;
-       Long productId = 10L;
-
-        requestDto = new CartRequestDto(memberId, productId, 10);
-
+    private void setMemberId(Member member, Long id) throws Exception {
+        Field field = member.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(member, id);
     }
 
+    private void setProductId(Product product, Long id) throws Exception {
+        Field field = product.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(product, id);
+    }
+
+    private void setCartId(Cart cart, Long id) throws Exception {
+        Field field = cart.getClass().getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(cart, id);
+    }
+    @BeforeEach
+     void setup() throws Exception{
+
+        member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
+        setMemberId(member,1L);
+
+        product = Product.builder().stock(10).build();
+        setProductId(product,1L);
+
+        cart = new Cart(member , product, 10, UUID.randomUUID().toString());
+        setCartId(cart,1L);
+
+        cartRequest = new CartRequestDto(cart.getMember().getId(),cart.getProduct().getId(),cart.getQuantity());
+    }
 
     @Test
     @DisplayName("カートをに商品を追加します")
     void createCart(){
        //given
-        Member member = Member.builder().id(1L).build();
-        Product product = Product.builder().id(10L).build();
-
-        Cart cart = new Cart(1L, member, product, 10);
 
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
-        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(cartRepository.save(any(Cart.class))).thenReturn(cart);
 
         //when
 
-        CartResponseDto result = cartService.createCart(requestDto);
+        CartResponseDto result = cartService.createCart(member.getId(),cartRequest);
 
         //then
         assertNotNull(result);
         assertEquals(1L,result.getMemberId());
         assertEquals(10,result.getQuantity());
+        assertNotEquals(-1, result.getQuantity());
         verify(cartRepository,times(1)).save(any(Cart.class));
     }
 
     @Test
-    @DisplayName("idで探す")
-    void TestFindById(){
+    @DisplayName("カートにある商品のリスト照会")
+    void TestGetCarts(){
         //given
-        Member member = Member.builder().id(1L).build();
-        Product product = Product.builder().id(10L).build();
+        PageRequest pageable = PageRequest.of(0, 10);
+        List<CartResponseDto> mockCarts = List.of(cart.toResponse());
+        Page<CartResponseDto> mockCartPage = new PageImpl<>(mockCarts, pageable, mockCarts.size());
 
-        Cart cart = new Cart(1L, member, product, 10);
-
-        when(cartRepository.findById(1L)).thenReturn(Optional.ofNullable(cart));
+        when(cartRepository.findAllByMemberMemberUuid(member.getMemberUuid(),pageable)).thenReturn(mockCartPage);
 
         //when
-        CartResponseDto result = cartService.findById(1L);
+        Page<CartResponseDto> result = cartService.getCarts(member.getMemberUuid(), pageable);
 
         //then
         assertNotNull(result);
-        assertEquals(cart.getId(), result.getId());
-        verify(cartRepository,times(1)).findById(1L);
+        assertEquals(mockCarts.size(),result.getTotalElements());
+        verify(cartRepository,times(1)).findAllByMemberMemberUuid(member.getMemberUuid(),pageable);
     }
     @Test
     @DisplayName("カートをアップデート")
     void TestCartUpdate(){
         //given
-        Member member = Member.builder().id(1L).build();
-        Product product = Product.builder().id(10L).build();
 
-        Cart cart = new Cart(1L, member, product, 10);
+        CartUpdateDto updatedCard = CartUpdateDto.builder().quantity(5).build();
 
-        // 20개로 수정
-        CartUpdateDto cartUpdateDto = new CartUpdateDto(20);
-
-        //업테이트 된 카트 객체
-        Cart updateCart = new Cart(1L, member, product, 20);
-
-        when(cartRepository.findById(1L)).thenReturn(Optional.ofNullable(cart));
-        when(cartRepository.save(any(Cart.class))).thenReturn(updateCart);
-
+        when(cartRepository.findByMemberMemberUuidAndCartUuid(member.getMemberUuid(), cart.getCartUuid())).thenReturn(Optional.ofNullable(cart));;
 
         //when
-        CartResponseDto result = cartService.updateCart(1L, cartUpdateDto);
+        CartResponseDto result = cartService.updateCart(member.getMemberUuid(),cart.getCartUuid(),updatedCard);
 
         //then
         assertNotNull(result);
-        assertEquals(20,result.getQuantity());
-        verify(cartRepository,times(1)).save(any(Cart.class));
+        assertEquals(5,result.getQuantity());
+        assertNotEquals(-1, result.getQuantity());
+        verify(cartRepository,times(1)).findByMemberMemberUuidAndCartUuid(member.getMemberUuid(), cart.getCartUuid());
     }
 
 
@@ -124,14 +137,13 @@ class CartServiceImplTest {
     @DisplayName("カートを削除")
     void deleteCart(){
         //given
-        when(cartRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(cartRepository).deleteById(1L);
+        when(cartRepository.findByMemberMemberUuidAndCartUuid(member.getMemberUuid(),cart.getCartUuid())).thenReturn(Optional.ofNullable(cart));
 
         //when
-        cartService.deleteCart(1L);
+        cartService.deleteCart(member.getMemberUuid(),cart.getCartUuid());
 
         //then
-        verify(cartRepository,times(1)).deleteById(1L);
+        verify(cartRepository,times(1)).delete(cart);
 
     }
 

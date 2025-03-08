@@ -1,8 +1,6 @@
 package com.zinikai.shop.domain.member.service;
 
 import com.zinikai.shop.domain.member.repository.MemberRepository;
-import com.zinikai.shop.domain.member.repository.MemberRepositoryImpl;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return memberRepository.findByEmail(email)
                 .map(member -> {
                     System.out.println("DB에서 찾은 사용자: " + member.getEmail());
-                    return new UserPrincipal(member.getEmail(), member.getPassword());
+                    return new CustomUserDetails(member);
                 })
                 .orElseThrow(() -> {
                     System.out.println("사용자를 찾을 수 없음: " + email);

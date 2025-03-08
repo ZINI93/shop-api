@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.config.annotation.SecurityBuilder;
+import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -31,9 +33,9 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
 
 
     @Override
-    public Page<OrdersResponseDto> searchOrders(Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
+    public Page<OrdersResponseDto> searchOrders(String memberUuid, Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
         // 조건식 생성
-        BooleanExpression predicate = buildPredicate(status, startDate, endDate, minAmount, maxAmount);
+        BooleanExpression predicate = buildPredicate(memberUuid, status, startDate, endDate, minAmount, maxAmount);
 
 
         //정렬 처리
@@ -68,10 +70,15 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
 
     }
 
-    private BooleanExpression buildPredicate(Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount) {
-        return filterByStatus(status)
+    private BooleanExpression buildPredicate(String memberUuid, Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount) {
+        return filterByMember(memberUuid)
+                .and(filterByStatus(status))
                 .and(filterByDateRange(startDate, endDate))
                 .and(filterByAmountRange(minAmount, maxAmount));
+    }
+
+    private BooleanExpression filterByMember(String memberUuid){
+        return orders.member.memberUuid.eq(memberUuid);
     }
 
     private BooleanExpression filterByStatus(Status status) {
@@ -105,14 +112,6 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
         }
         return orders.totalAmount.isNotNull().and(orders.totalAmount.between(minAmount, maxAmount));
     }
-//    private OrderSpecifier<?> getSortOrder(String sortField) {
-//        if ("createdAt".equalsIgnoreCase(sortField)) {
-//            return orders.createdAt.desc(); //  주문 시간 역순 정렬
-//        } else if ("totalAmount".equalsIgnoreCase(sortField)) {
-//            return orders.totalAmount.desc(); // 총 금액 역순 정렬
-//        }
-//        return orders.id.desc(); //기본정렬 id 역순
-//    }
 
     //　上のコードを改善コード
     private static final Map<String, OrderSpecifier<?>> SORT_FIELDS = Map.of(
@@ -123,8 +122,4 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
         return SORT_FIELDS.getOrDefault(sortField.toLowerCase(),orders.id.desc());
     }
 
-
-
-//    getOrDefault()를 사용하여 기본 정렬 필드(id.desc()) 처리.
-//            Map.of()를 활용하면 if-else 없이 바로 정렬 필드를 가져올 수 있음.
 }
