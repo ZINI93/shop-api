@@ -14,6 +14,7 @@ public interface PaymentService {
 
     PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto);
     Page<PaymentResponseDto> getPayments(String ownerUuid, Pageable pageable);
+    PaymentResponseDto getPayment(String ownerUuid, String paymentUuid);
     PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid , PaymentUpdateDto updateDto);
     void deletePayment(String ownerUuid, String paymentUuid);
 }

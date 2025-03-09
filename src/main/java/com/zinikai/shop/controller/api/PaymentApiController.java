@@ -22,7 +22,6 @@ public class PaymentApiController {
 
     private final PaymentService paymentService;
 
-    // payment 생성
 
     @PostMapping
     public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto requestDto,
@@ -36,7 +35,7 @@ public class PaymentApiController {
         URI location = URI.create("/api/payments/" + savedPayment.getId());
         return ResponseEntity.created(location).body(savedPayment);
     }
-    // product IDで探す- POSTMEN TEST 完了
+
     @GetMapping
     public ResponseEntity<Page<PaymentResponseDto>> getPayments(Authentication authentication,
                                                                 @PageableDefault(size = 10,page = 0)Pageable pageable) {
@@ -47,7 +46,20 @@ public class PaymentApiController {
         return ResponseEntity.ok(payments);
     }
 
-    // product アップデート- POSTMEN TEST 完了
+    @GetMapping("{paymentUuId}")
+    public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable String paymentUuId,
+                                                          Authentication authentication){
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        PaymentResponseDto payment = paymentService.getPayment(memberUuid, paymentUuId);
+
+        return ResponseEntity.ok(payment);
+    }
+
+
+
     @PutMapping("{paymentUuId}")
     public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable String paymentUuId,
                                                           Authentication authentication,
@@ -59,7 +71,6 @@ public class PaymentApiController {
         return ResponseEntity.ok(paymentResponseDto);
     }
 
-    // product 削除- POSTMEN TEST 完了
     @DeleteMapping("{paymentUuid}")
     public ResponseEntity<Void> deletePayment(@PathVariable String paymentUuid,
                                               Authentication authentication){

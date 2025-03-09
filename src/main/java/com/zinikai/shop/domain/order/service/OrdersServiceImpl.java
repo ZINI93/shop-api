@@ -76,6 +76,16 @@ public class OrdersServiceImpl implements OrdersService {
     }
 
     @Override
+    public OrdersResponseDto getOrder(String memberUuid, String ordersUuid) {
+        Orders order = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, ordersUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID"));
+
+        matchMemberUuid(memberUuid,order);
+
+        return order.toResponseDto();
+    }
+
+    @Override
     public Page<OrdersResponseDto> searchOrder(String memberUuid, Status status, LocalDateTime starDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
 
         log.info("Searching orders for member UUID:{}", memberUuid);

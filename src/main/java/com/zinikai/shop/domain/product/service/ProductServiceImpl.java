@@ -26,9 +26,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
 
-    /**
-     * 商品登録
-     */
+
     @Override
     @Transactional
     public ProductResponseDto createProduct(Long memberId, ProductRequestDto requestDto) {
@@ -65,8 +63,19 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.searchProduct(ownerUuid, keyword, minPrice, maxPrice, sortField, pageable);
     }
 
+    @Override
+    public ProductResponseDto getProduct(String ownerUuid, String productUuid) {
+        Product product = productRepository.findByOwnerUuidAndProductUuid(ownerUuid, productUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or product UUID"));
 
-    //　アップデート
+        if (Objects.equals(product.getOwnerUuid(), ownerUuid)){
+            throw new IllegalArgumentException("Product not match for owner UUID");
+        }
+
+        return product.toResponseDto();
+    }
+
+
     @Override
     @Transactional
     public ProductResponseDto updateProduct(String ownerUuid, String productUuid, ProductUpdateDto updateDto) {
@@ -90,7 +99,6 @@ public class ProductServiceImpl implements ProductService {
         return product.toResponseDto();
     }
 
-    //削除
 
     @Override
     @Transactional

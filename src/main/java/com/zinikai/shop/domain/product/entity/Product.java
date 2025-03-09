@@ -30,14 +30,14 @@ public class Product extends TimeStamp {
     @Column(nullable = false)
     private Integer stock;
 
-    @Column(name = "product_uuid",nullable = false,updatable = false,unique = true)
+    @Column(name = "product_uuid", nullable = false, updatable = false, unique = true)
     private String productUuid;
 
-    @Column(name = "owner_uuid",nullable = false, updatable = false)
+    @Column(name = "owner_uuid", nullable = false, updatable = false)
     private String ownerUuid;
 
     @Builder
-    public Product(String name, BigDecimal price, String description, Integer stock,String productUuid,String ownerUuid) {
+    public Product(String name, BigDecimal price, String description, Integer stock, String productUuid, String ownerUuid) {
         this.name = name;
         this.price = price;
         this.description = description;
@@ -46,7 +46,7 @@ public class Product extends TimeStamp {
         this.ownerUuid = ownerUuid;
     }
 
-    public ProductResponseDto toResponseDto(){
+    public ProductResponseDto toResponseDto() {
 
         return ProductResponseDto.builder()
                 .name(this.name)
@@ -55,12 +55,20 @@ public class Product extends TimeStamp {
                 .stock(this.stock)
                 .build();
     }
+
     //アップデート
     public void updateInfo(String name, BigDecimal price, String description, Integer stock) {
         this.name = name;
         this.price = price;
         this.description = description;
         this.stock = stock;
+    }
+
+    public void decreaseStock(int quantity) {
+        if (this.stock < quantity) {
+            throw new IllegalStateException("Stock shortage: " + this.name);
+        }
+        this.stock -= quantity;
     }
 
 }

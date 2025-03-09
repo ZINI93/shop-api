@@ -17,6 +17,7 @@ public interface ProductService {
 
     Page<ProductResponseDto>  searchProducts(String ownerUuid,String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
 
+    ProductResponseDto getProduct(String ownerUuid,String productUuid);
     ProductResponseDto updateProduct(String ownerUuid, String productUuid, ProductUpdateDto updateDto);
 
     void deleteProduct(String ownerUuid,String productUuid);

@@ -4,6 +4,7 @@ import com.zinikai.shop.domain.member.service.CustomUserDetails;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
+import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.service.OrdersService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,19 @@ public class OrderApiController {
         OrdersResponseDto order = orderService.createOrder(memberId, requestDto);
         URI location = URI.create("/api/orders" + order.getId());
         return ResponseEntity.created(location).body(order);
+
+    }
+
+    @GetMapping("{orderUuid}")
+    public ResponseEntity<OrdersResponseDto> getOrder(@PathVariable String orderUuid,
+                                           Authentication authentication){
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        OrdersResponseDto order = orderService.getOrder(memberUuid, orderUuid);
+
+        return ResponseEntity.ok(order);
 
     }
 

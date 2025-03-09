@@ -1,15 +1,12 @@
 # ショッピングモール API
 
 ## 1. **API 概要**
-このプロジェクトは、商品検索、カート機能、注文および支払い処理ができるシンプルなショッピングモールAPIです。また、管理者ページを通じて商品登録や在庫管理も可能です。
-
-
+このプロジェクトは、オープンマーケットプラットフォームを実装したAPIで、一般ユーザー（販売者）が商品を登録・管理でき、他のユーザー（購入者）が商品を検索して購入できる機能を提供します。
 ### **主要機能**
 
-- 商品管理 
-- カート機能 
-- 注文および支払い
-- 管理者ページ
+- **販売者**: 商品を登録し、在庫を管理し、注文状態を更新できます。
+- **購入者**: 商品を検索し、カートに追加して注文および決済を行えます。
+- **管理者**: システム全体をモニタリングし、ユーザーや商品を管理できます。
 
 ### **API バージョン**
 - **バージョン:** `v1.0`
@@ -29,68 +26,291 @@
 - ----
 ## 3. **エンドポイント一覧**
 
+### 3.1. **認証**
 
-###  会員
-- **GET /api/member/{memberId}** → 会員IDで情報取得
-- **POST /api/member/join** → 会員登録
-- **PUT /api/member/{memberId}** → 会員情報編集
+#### **1) トークン発行**
+- **HTTPメソッド:** `POST`
+- **URL:** `/authenticate`
+```json
+{
+  "email": "zini@gmail.com",
+  "password": "12341234"
+}
+```
+---
 
-###  カート
-- **POST /api/cart** → カートに商品を追加
-- **GET /api/cart/{cartId}** → カート内の個別商品取得
-- **GET /api/cart** → カート全体の表示
-- **PUT /api/cart/{cartId}** → カート内の商品数量を変更
-- **DELETE /api/cart/{cartId}** → カートから商品を削除
+### 3.2. **管理者機能**
 
-###  注文
-- **POST /api/orders** → 注文作成
-- **GET /api/orders/{orderId}** → 注文IDで情報取得
-- **GET /api/orders?status=&startDate=&endDate=&sort=** → (フィルター & 並べ替え) 全注文の取得
-- **PUT /api/orders/{orderId}** → 注文情報を編集
-- **DELETE /api/orders/{orderId}** → 注文削除
+#### **1) 会員リスト**
+- **HTTPメソッド:** `GET`
+- **検索機能:** `お名前`, `電話番号`
+- **URL:** `/api/admin/members/search?name=park&phoneNumber=080`
 
-###  支払い
-- **POST /api/payment** → 支払い作成
-- **GET /api/payment/{paymentId}** → 支払いIDで情報取得
-- **PUT /api/payment/{paymentId}/method** → 支払い方法の変更
-- **PUT /api/payment/{paymentId}/confirm** → 支払い完了処理
-- **PUT /api/payment/{paymentId}/refund** → 返金リクエスト
-- **DELETE /api/payment/{paymentId}** → 支払い削除
+#### **2) 会員削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/admin/member/{memberUuId}`
+---
 
-###  商品
-- **POST /api/admin/product** → (管理者) 商品作成
-- **GET /api/product/{productId}** → 商品IDで情報取得
-- **GET /api/products?keyword=&priceMin=&priceMax=&sort=** → 商品検索
-- **PUT /api/admin/product/{productId}** → (管理者) 商品編集
-- **DELETE /api/admin/product/{productId}** → (管理者) 商品削除
+### 3.3. **会員機能**
 
-###  商品画像
-- **POST /api/admin/product-images** → (管理者) 商品画像追加
-- **GET /api/product-images?productId={productId}** → 特定の商品に対する画像取得（未実装）
-- **PUT /api/admin/product-images/{imageId}** → (管理者) 商品画像編集
-- **DELETE /api/admin/product-images/{imageId}** → (管理者) 商品画像削除
+#### **1) 会員登録**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/join`
 
-### 管理者関連 API
-- **GET /api/admin/payment-manege** → 支払い一覧の取得
-- **GET /api/admin/memberSearch** → 会員一覧の取得（電話番号、名前で検索可能）
-- **DELETE /api/admin/member/{memberId}** → 会員削除
-- **POST /api/admin/product** → 商品登録
-- **PUT /api/admin/product/{productId}** → 商品編集
-- **DELETE /api/admin/product/{productId}** → 商品削除
+**リクエスト本文:**
+```json
+{
+  "email": "qwas566@gmail.com",
+  "password": "12341234",
+  "name": "kakao",
+  "phoneNumber": "080-1234-5678",
+  "address": {
+    "street": "higasiarima",
+    "city": "kanagawa",
+    "zipcode": "12345"
+  }
+}
+```
+#### **2) 会員情報の取得**
+- **HTTPメソッド:** `GET`
+- **検索機能:**　`ユーザー情報`
+- **URL:** `/api/members/me`
 
-### 動的クエリ
-#### 商品検索
+#### **3) 会員情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/members/update`
 
-GET /api/products?keyword=sample&minPrice=100&maxPrice=500&sort=price
-GET /api/orders?status=completed&startDate=2024-01-01&endDate=2024-12-31&sort=totalAmount
-GET /api/products?page=0&size=10
+**リクエスト本文:**
+```json
+{
+  "password": "12341234",
+  "name": "KOGUMA",
+  "phoneNumber": "010-1534-5678",
+  "address": {
+    "street": "sugesengoku",
+    "city": "kanagawa",
+    "zipcode": "12345"
+  }
+}
+```
+---
 
-### テーブル関係の概要
-- **Member と Order**: 1:N 関係（1人の会員が複数の注文を行える）
-- **Order と OrderItem**: 1:N 関係（1つの注文に複数の商品が含まれる）
-- **Product と Cart**: 1:N 関係（1つの商品が複数のカートに入ることができる）
-- **Product と ProductCategory**: N:1 関係（複数の商品が1つのカテゴリーに属する）
-- **Product と ProductImage**: 1:N 関係（1つの商品が複数の画像を持つ）
+### 3.4. **注文機能**
+
+#### **1) 注文作成**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/orders`
+
+**リクエスト本文:**
+```json
+{
+  "memberId": 1,
+  "totalAmount": "100.00",
+  "paymentMethod": "CREDIT_CARD",
+  "orderItems": [
+    {
+      "productId": 1,
+      "quantity": 100
+    },
+    {
+      "productId": 2,
+      "quantity": 50
+    }
+  ]
+}
+```
+#### **２) 注文リスト**
+- **HTTPメソッド:** `GET`
+- **検索機能:** `注文のステータス`, `日付、時間`, `値段範囲`
+- **URL:** `/api/orders?status=PENDING&starDate=2023-10-01T00:00:00&endDate=2026-10-31T23:59:59&minAmount=100&maxAmount=2000&sortField=createdAt`
+
+
+#### **3) 注文情報の取得**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/orders/{orderUuid}`
+
+
+#### **4) 注文情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/orders/{orderUuid}`
+
+**リクエスト本文:**
+```json
+{
+  "totalAmount": "100.00",
+  "status": "CANCELLED",
+  "paymentMethod": "PayPay",
+  "orderItems": "1"
+}
+```
+#### **5) 注文削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/orders/{orderUuid} `
+
+---
+
+### 3.5. **注文商品**
+
+#### **1) 注文商品の作成**
+- `注文作成時に自動的に追加されま`
+
+
+#### **２) 注文商品リスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/order-items`
+
+
+#### **3) 注文商品情報の取得**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/order-items/{orderItemUuid}`
+
+---
+### 3.6. **お支払い機能**
+
+#### **1) 決済作成**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/payments`
+
+**リクエスト本文:**
+```json
+{
+  "orderId": "1",
+  "paymentMethod": "PayPay"
+}
+```
+#### **２) 決済リスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/payments`
+
+
+#### **3) 決済情報の取得**　
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/payments/{paymentUuId}`
+
+
+#### **5) 決済情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/payments/{paymentUuId}`
+
+**リクエスト本文:**
+```json
+{
+  "status": "CANCELED",
+  "paymentMethod": "PayPay"
+}
+```
+#### **5) 決済削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/payments/{paymentUuId} `
+
+---
+### 3.7. **商品機能**
+
+#### **1) 商品登録**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/products`
+
+**リクエスト本文:**
+```json
+{
+  "name": "おしゃれカーテン",
+  "price": 2000.00,
+  "description": "キラキラカーテン",
+  "stock" : 100
+}
+```
+#### **2) 商品リスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/products`
+
+
+#### **3) 商品情報の取得**　
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/products/{productUuid}`
+
+
+#### **4) 商品情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/products/{productUuid}`
+
+**リクエスト本文:**
+```json
+{
+  "name": "可愛いカーテン",
+  "price": 1000.00,
+  "description": "長いカーテン",
+  "stock" : 400
+}
+```
+#### **5) 商品削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/products/{productUuid}`
+---
+### 3.8. **商品のイメージ機能**
+
+#### **1) 商品登録**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/product-images`
+
+**リクエスト本文:**
+```json
+{
+  "productId": 1,
+  "imageUrl": "https://www.image.com"
+}
+```
+#### **2) 商品イメージリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/product-images`
+
+#### **3)  商品イメージ情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/product-images/{productImageUuid}`
+
+**リクエスト本文:**
+```json
+{
+  "imageUrl": "https://www.image.com"
+}
+```
+#### **5) 商品イメージ削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/product-images/{productImageUuid}`
+---
+### 3.9. **カート機能**
+
+#### **1) カート作成**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/carts`
+
+**リクエスト本文:**
+```json
+{
+  "memberId": 5,
+  "productId": "1",
+  "quantity": 1
+}
+```
+#### **2) カートリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/carts `
+
+
+#### **3) カート情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/carts/{cartUuid}`
+
+**リクエスト本文:**
+```json
+{
+  "productId": "1",
+  "quantity": 1
+}
+```
+#### **4) カート削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/carts/{cartUuid}`
+---
 
 ---
 テスト

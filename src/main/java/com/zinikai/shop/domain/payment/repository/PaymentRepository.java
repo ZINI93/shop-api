@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    Page<PaymentResponseDto> findAllByOwnerUuid(String ownerUuid, Pageable pageable);
+    Page<Payment> findAllByOwnerUuid(String ownerUuid, Pageable pageable);
 
     Optional<Payment> findByOwnerUuid(String ownerUuid);
 

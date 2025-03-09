@@ -41,7 +41,7 @@ public class OrderItem extends TimeStamp {
     private String ownerUuid;
 
     @Column(name = "order_item_uuid", nullable = false, updatable = false, unique = true)
-    private String orderItemUud;
+    private String orderItemUuid;
 
 
     public void setOrders(Orders orders) {
@@ -55,7 +55,7 @@ public class OrderItem extends TimeStamp {
         this.quantity = quantity;
         this.price = price;
         this.ownerUuid = ownerUuid;
-        this.orderItemUud = UUID.randomUUID().toString();
+        this.orderItemUuid = UUID.randomUUID().toString();
     }
 
     public OrderItemResponseDto toResponseDto() {

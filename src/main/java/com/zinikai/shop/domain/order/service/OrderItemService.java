@@ -12,4 +12,7 @@ public interface OrderItemService {
     void createAndSaveOrderItem(Member member, OrderItemRequestDto itemDto, Orders order);
 
     Page<OrderItemResponseDto> getOrderItems (String ownerUuid, Pageable pageable);
+
+
+    OrderItemResponseDto getOrderItem(String memberUuid, String orderItemUuid);
 }

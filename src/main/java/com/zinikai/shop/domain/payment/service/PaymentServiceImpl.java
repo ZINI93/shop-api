@@ -2,7 +2,9 @@ package com.zinikai.shop.domain.payment.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
+import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
+import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
@@ -11,6 +13,10 @@ import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
 import com.zinikai.shop.domain.payment.entity.QPayment;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
+import com.zinikai.shop.domain.product.dto.ProductResponseDto;
+import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
+import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +41,11 @@ public class PaymentServiceImpl implements PaymentService {
     private final MemberRepository memberRepository;
     private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
+    private final OrderItemRepository orderItemRepository;
 
-    /**
-     * お支払いを作成
-     */
+
+
+
 
     @Override
     @Transactional
@@ -61,6 +68,18 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Created payment:{}", payment);
 
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrders(order);
+        for (OrderItem orderItem : orderItems) {
+            Product product = orderItem.getProduct();
+
+            if (product.getStock() < orderItem.getQuantity()){
+                throw new IllegalArgumentException("Stock shortage! product name: "+ product.getName());
+            }
+
+            product.decreaseStock(orderItem.getQuantity());
+        }
+
         return paymentRepository.save(payment).toResponse();
 
     }
@@ -70,8 +89,23 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Searching payment for owner UUID :{}", ownerUuid);
 
-        return paymentRepository.findAllByOwnerUuid(ownerUuid, pageable);
+        Page<Payment> payments = paymentRepository.findAllByOwnerUuid(ownerUuid, pageable);
+
+        return payments.map(Payment::toResponse);
+
     }
+
+    @Override
+    public PaymentResponseDto getPayment(String ownerUuid, String paymentUuid) {
+
+        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+
+        matchOwnerUuid(ownerUuid,payment);
+
+        return payment.toResponse();
+    }
+
 
     @Override
     @Transactional

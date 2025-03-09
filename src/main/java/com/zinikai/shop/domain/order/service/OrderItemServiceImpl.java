@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderItemServiceImpl implements OrderItemService {
 
     private final OrderItemRepository orderItemRepository;
-    private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
 
 
@@ -54,14 +55,29 @@ public class OrderItemServiceImpl implements OrderItemService {
 
         log.info("Searching orderItem for member UUID:{}", ownerUuid);
 
-        return orderItemRepository.findAllByOwnerUuidOrderByCreatedAtDesc(ownerUuid,pageable);
+        Page<OrderItem> orderItems = orderItemRepository.findAllByOwnerUuidOrderByCreatedAtDesc(ownerUuid, pageable);
+
+        return orderItems.map(OrderItem::toResponseDto);
 
     }
 
-    //
+    @Override
+    public OrderItemResponseDto getOrderItem(String memberUuid, String orderItemUuid) {
 
+        OrderItem orderItem = orderItemRepository.findByOwnerUuidAndOrderItemUuid(memberUuid,orderItemUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or orderItem UUID"));
 
+        matchMemberUuid(memberUuid,orderItem);
 
-    //d
+        return orderItem.toResponseDto();
+
+    }
+
+    private void matchMemberUuid(String memberUuid, OrderItem orderItem) {
+        if (!Objects.equals(orderItem.getOwnerUuid(), memberUuid)) {
+            throw new IllegalArgumentException("Member UUID dose not match the order owner");
+        }
+    }
+
 }
 
