@@ -5,6 +5,7 @@ import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +25,7 @@ public class PaymentApiController {
 
 
     @PostMapping
-    public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto requestDto,
+    public ResponseEntity<PaymentResponseDto> createPayment(@Valid @RequestBody PaymentRequestDto requestDto,
                                                             Authentication authentication){
 
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
@@ -63,7 +64,7 @@ public class PaymentApiController {
     @PutMapping("{paymentUuId}")
     public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable String paymentUuId,
                                                           Authentication authentication,
-                                                          @RequestBody PaymentUpdateDto updateDto){
+                                                          @Valid @RequestBody PaymentUpdateDto updateDto){
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 

@@ -17,13 +17,10 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class TimeStamp {
 
-    // 생성일시
-
     @Column(nullable = false, updatable = false)
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // 수정일시
 
     @Column(nullable = false)
     @LastModifiedDate

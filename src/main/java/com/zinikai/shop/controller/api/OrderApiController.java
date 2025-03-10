@@ -7,6 +7,7 @@ import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.service.OrdersService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public class OrderApiController {
 
     //オーダーを作成
     @PostMapping
-    public ResponseEntity<OrdersResponseDto> createOrder(@RequestBody OrdersRequestDto requestDto,
+    public ResponseEntity<OrdersResponseDto> createOrder(@Valid  @RequestBody OrdersRequestDto requestDto,
                                                          Authentication authentication) {
 
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
@@ -78,7 +79,7 @@ public class OrderApiController {
 
     @PutMapping("{orderUuid}")
     public ResponseEntity<OrdersResponseDto> editOrder(@PathVariable String orderUuid,
-                                                       @RequestBody OrdersUpdateDto updateDto,
+                                                       @Valid @RequestBody OrdersUpdateDto updateDto,
                                                        Authentication authentication) {
 
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);

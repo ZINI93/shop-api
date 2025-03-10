@@ -4,6 +4,7 @@ import com.zinikai.shop.domain.member.service.CustomUserDetails;
 import com.zinikai.shop.domain.product.dto.*;
 import com.zinikai.shop.domain.product.service.ProductImageService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public class ProductImageApiController {
     private final ProductImageService productImageService;
 
     @PostMapping
-    public ResponseEntity<ProductImageResponseDto> createProductImage(@RequestBody ProductImageRequestDto requestDto,
+    public ResponseEntity<ProductImageResponseDto> createProductImage(@Valid @RequestBody ProductImageRequestDto requestDto,
                                                                       Authentication authentication) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -52,7 +53,7 @@ public class ProductImageApiController {
     @PutMapping("{productImageUuid}")
     public ResponseEntity<ProductImageResponseDto> editProductImage(@PathVariable String productImageUuid,
                                                                     Authentication authentication,
-                                                                    @RequestBody ProductImageUpdateDto UpdateDto) {
+                                                                    @Valid @RequestBody ProductImageUpdateDto UpdateDto) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();

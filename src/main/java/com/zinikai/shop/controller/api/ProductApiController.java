@@ -6,6 +6,7 @@ import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import com.zinikai.shop.domain.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,12 +30,12 @@ public class ProductApiController {
 
     //商品登録　ー　POSTMEN TEST 完了
     @PostMapping
-    public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductRequestDto requestDto,
-                                                            Authentication authentication){
+    public ResponseEntity<ProductResponseDto> createProduct(@Valid @RequestBody ProductRequestDto requestDto,
+                                                            Authentication authentication) {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         Long memberId = customUserDetails.getMemberId();
 
-        ProductResponseDto product = productService.createProduct(memberId,requestDto);
+        ProductResponseDto product = productService.createProduct(memberId, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -55,19 +56,19 @@ public class ProductApiController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String sortField,
             @PageableDefault(size = 20, page = 0) Pageable pageable,
-            Authentication authentication){
+            Authentication authentication) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();
 
-        Page<ProductResponseDto> searchProducts = productService.searchProducts(memberUuid,keyword, minPrice,maxPrice,sortField,pageable);
+        Page<ProductResponseDto> searchProducts = productService.searchProducts(memberUuid, keyword, minPrice, maxPrice, sortField, pageable);
         return ResponseEntity.ok(searchProducts);
     }
 
     @PutMapping("{productUuid}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable String productUuid,
+    public ResponseEntity<ProductResponseDto> updateProduct(@Valid @PathVariable String productUuid,
                                                             @RequestBody ProductUpdateDto updateDto,
-                                                            Authentication authentication){
+                                                            Authentication authentication) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();
@@ -80,12 +81,12 @@ public class ProductApiController {
 
     @DeleteMapping("{productUuid}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String productUuid,
-                                                            Authentication authentication){
+                                              Authentication authentication) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();
 
-        productService.deleteProduct(memberUuid,productUuid);
+        productService.deleteProduct(memberUuid, productUuid);
 
         return ResponseEntity.noContent().build();
 

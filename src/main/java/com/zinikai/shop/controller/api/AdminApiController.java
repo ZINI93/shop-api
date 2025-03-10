@@ -43,7 +43,7 @@ public class AdminApiController {
         return ResponseEntity.ok(nameAndPhoneNumber);
     }
 
-    @DeleteMapping("/member/{memberUuId}")
+    @DeleteMapping("/members/{memberUuId}")
     public ResponseEntity<Void> deleteMember(@PathVariable String memberUuid){
         memberService.deleteMember(memberUuid);
         return ResponseEntity.noContent().build();

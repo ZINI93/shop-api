@@ -22,7 +22,7 @@ public class MemberApiController {
     private final MemberService memberService;
 
     @PostMapping("/join")
-    public ResponseEntity<MemberResponseDto> createMember(@RequestBody MemberRequestDto requestDto){
+    public ResponseEntity<MemberResponseDto> createMember(@Valid @RequestBody MemberRequestDto requestDto){
         MemberResponseDto member = memberService.createMember(requestDto);
         URI location = URI.create("/api/member" + member.getId());
         return ResponseEntity.created(location).body(member);
@@ -40,7 +40,7 @@ public class MemberApiController {
 
 
     @PutMapping("/members/update")
-    public ResponseEntity<MemberResponseDto> editMember(@RequestBody MemberUpdateDto updateDto,
+    public ResponseEntity<MemberResponseDto> editMember(@Valid @RequestBody MemberUpdateDto updateDto,
                                                         Authentication authentication){
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();

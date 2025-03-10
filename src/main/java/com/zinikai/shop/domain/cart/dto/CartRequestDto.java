@@ -17,7 +17,7 @@ public class CartRequestDto {
     @NotNull
     @Min(value = 1, message = "数量は1から1000まで入力してください。" )
     @Max(value = 1000 , message = "数量は1から1000まで入力してください。")
-    private Integer quantity;
+    private final Integer quantity;
 
     @Builder
     public CartRequestDto(Long memberId, Long productId, Integer quantity) {

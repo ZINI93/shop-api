@@ -10,7 +10,7 @@ import lombok.Data;
 @Builder
 public class CartResponseDto {
 
-     private Long id;
+    private Long id;
     private Long memberId ;
     private Long productId;
     private Integer quantity;
