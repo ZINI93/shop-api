@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.member.service;
 
+import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
@@ -23,6 +24,7 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
     @Override
     @Transactional
@@ -39,9 +41,12 @@ public class MemberServiceImpl implements MemberService {
                 .role(MemberRole.USER)
                 .build();
 
+        mailService.sendWelcomeEmail(member.getEmail(),member.getName());
+
         log.info("Created savedMember:{}", member);
 
         return memberRepository.save(member).toResponseDto();
+
     }
 
 
