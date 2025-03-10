@@ -11,11 +11,11 @@ import org.springframework.data.web.ProjectedPayload;
 @Data
 @Builder
 public class MemberResponseDto {
-    private Long id;
-    private String email;
-    private String name;
-    private String phoneNumber;
-    private Address address;
+    private final Long id;
+    private final String email;
+    private final String name;
+    private final String phoneNumber;
+    private final Address address;
     private MemberRole role;
 
     @Builder

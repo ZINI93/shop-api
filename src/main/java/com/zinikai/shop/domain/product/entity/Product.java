@@ -71,6 +71,13 @@ public class Product extends TimeStamp {
         this.stock -= quantity;
     }
 
+    public void refundStock(int quantity) {
+        if (quantity < 1){
+            throw new IllegalArgumentException("Refund quantity must be at least 1");
+        }
+            this.stock += quantity;
+    }
+
 }
 
 

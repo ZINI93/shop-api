@@ -44,9 +44,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderItemRepository orderItemRepository;
 
 
-
-
-
     @Override
     @Transactional
     public PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto) {
@@ -54,7 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Creating payment for member ID:{}", memberId);
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: "+ memberId));
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + memberId));
 
         Orders order = ordersRepository.findById(requestDto.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + requestDto.getOrderId()));
@@ -73,8 +70,8 @@ public class PaymentServiceImpl implements PaymentService {
         for (OrderItem orderItem : orderItems) {
             Product product = orderItem.getProduct();
 
-            if (product.getStock() < orderItem.getQuantity()){
-                throw new IllegalArgumentException("Stock shortage! product name: "+ product.getName());
+            if (product.getStock() < orderItem.getQuantity()) {
+                throw new IllegalArgumentException("Stock shortage! product name: " + product.getName());
             }
 
             product.decreaseStock(orderItem.getQuantity());
@@ -99,9 +96,9 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponseDto getPayment(String ownerUuid, String paymentUuid) {
 
         Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
 
-        matchOwnerUuid(ownerUuid,payment);
+        matchOwnerUuid(ownerUuid, payment);
 
         return payment.toResponse();
     }
@@ -114,7 +111,7 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Updating payment for Owner UUID :{}, Payment UUID:{}", ownerUuid, paymentUuid);
 
         Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
 
         matchOwnerUuid(ownerUuid, payment);
 
@@ -122,6 +119,25 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("updated payment:{}", payment);
 
+        Orders orders = payment.getOrders();
+        if (orders == null) {
+            throw new IllegalStateException("Order not found for payment: " + paymentUuid);
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrders(orders);
+        for (OrderItem orderItem : orderItems) {
+            Product product = orderItem.getProduct();
+
+            if (product == null) {
+                throw new IllegalArgumentException("Product not found for orderItem");
+            }
+
+            if (updateDto.getStatus() == PaymentStatus.REFUNDED) {
+                product.refundStock(orderItem.getQuantity());
+            } else {
+                throw new IllegalStateException("No Refund has been made");
+            }
+        }
         return payment.toResponse();
     }
 
@@ -132,7 +148,7 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Deleting payment for owner UUID:{}", ownerUuid);
 
         Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: "+paymentUuid));
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
 
         matchOwnerUuid(ownerUuid, payment);
 
