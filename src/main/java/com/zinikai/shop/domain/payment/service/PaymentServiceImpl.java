@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.OrderItem;
@@ -42,6 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
     private final OrderItemRepository orderItemRepository;
+    private final MailService mailService;
 
 
     @Override
@@ -75,6 +77,17 @@ public class PaymentServiceImpl implements PaymentService {
             }
 
             product.decreaseStock(orderItem.getQuantity());
+        }
+
+        if (PaymentStatus.COMPLETED.equals(payment.getStatus())){
+            mailService.sendPaymentCompletedEmail(
+                    order.getMember().getEmail(),
+                    order.getMember().getName(),
+                    order.getOrderUuid(),
+                    order.getTotalAmount(),
+                    requestDto.getPaymentMethod());
+        }else {
+            throw new IllegalArgumentException("Check completed");
         }
 
         return paymentRepository.save(payment).toResponse();
@@ -138,6 +151,7 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new IllegalStateException("No Refund has been made");
             }
         }
+
         return payment.toResponse();
     }
 

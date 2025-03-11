@@ -27,7 +27,7 @@ public class OrdersRequestDto {
     @Max(value = 10000 , message = "総量は１ー１０００で入力してください。")
     private BigDecimal totalAmount;
 
-    @NotBlank(message = "注文のステータスが必要です。")
+//    @NotBlank(message = "注文のステータスが必要です。")
     private Status status;
 
     @NotBlank(message = "お支払いの方法が必要です。")

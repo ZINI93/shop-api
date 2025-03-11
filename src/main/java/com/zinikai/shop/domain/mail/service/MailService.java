@@ -7,6 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @RequiredArgsConstructor
 @Service
 public class MailService {
@@ -22,6 +24,17 @@ public class MailService {
         sendEmail(toEmail, subject, content);
     }
 
+    public void sendPaymentCompletedEmail(String toEmail, String username, String orderUuid, BigDecimal price, String paymentMethod) {
+        String subject = "ZINIショップのお支払い完了しました。";
+        String content = "<h1>" + username + "様、お支払い完了しました</h1>"
+                + "<p>注文番号: " + orderUuid + "</p>"
+                + "<p>注文金額: " + price + "円</p>"
+                + "<p>注文方法: " + paymentMethod + "</p>";
+
+        sendEmail(toEmail, subject, content);
+    }
+
+
     private void sendEmail(String toEmail, String subject, String content) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -35,3 +48,4 @@ public class MailService {
         }
     }
 }
+
