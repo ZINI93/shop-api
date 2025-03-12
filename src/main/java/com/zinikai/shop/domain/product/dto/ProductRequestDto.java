@@ -23,7 +23,6 @@ public class ProductRequestDto {
     @Size(min = 1 , max = 200, message = "商品の内容は２００字以内で入力してください" )
     private String description;
 
-    @NotBlank
     @Min(value = 1 , message = "在庫は1000個以内で入力してください")
     @Max(value = 1000000 , message = "在庫は1000個以内で入力してください")
     private Integer stock;
