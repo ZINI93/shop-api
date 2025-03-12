@@ -5,6 +5,7 @@ import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -39,6 +40,11 @@ public class Member extends TimeStamp {
     @Column(name = "member_uuid",unique = true, nullable = false, updatable = false)
     private String memberUuid;
 
+
+    @Column(nullable = false)
+    private BigDecimal balance = BigDecimal.ZERO;
+
+
     @Builder
     public Member(String email, String password, String name, String phoneNumber, Address address, MemberRole role, String memberUuid) {
         this.email = email;
@@ -66,5 +72,10 @@ public class Member extends TimeStamp {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.address = address;
+    }
+
+
+    public void increaseBalance(BigDecimal amount){
+        this.balance = this.balance.add(amount);
     }
 }

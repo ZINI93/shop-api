@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = Payment.builder()
                 .orders(order)
                 .status(PaymentStatus.COMPLETED)
-                .paymentMethod(requestDto.getPaymentMethod())
+                .paymentMethod(order.getPaymentMethod())
                 .ownerUuid(member.getMemberUuid())
                 .build();
 
@@ -72,21 +73,28 @@ public class PaymentServiceImpl implements PaymentService {
         for (OrderItem orderItem : orderItems) {
             Product product = orderItem.getProduct();
 
+
             if (product.getStock() < orderItem.getQuantity()) {
                 throw new IllegalArgumentException("Stock shortage! product name: " + product.getName());
             }
 
             product.decreaseStock(orderItem.getQuantity());
+
+            BigDecimal totalPrice = (product.getPrice()).multiply(new BigDecimal(orderItem.getQuantity()));
+            // 手数料５％
+            BigDecimal sellerEarnings = totalPrice.multiply(new BigDecimal("0.95"));
+            member.increaseBalance((sellerEarnings));
+
         }
 
-        if (PaymentStatus.COMPLETED.equals(payment.getStatus())){
+        if (PaymentStatus.COMPLETED.equals(payment.getStatus())) {
             mailService.sendPaymentCompletedEmail(
                     order.getMember().getEmail(),
                     order.getMember().getName(),
                     order.getOrderUuid(),
                     order.getTotalAmount(),
-                    requestDto.getPaymentMethod());
-        }else {
+                    order.getPaymentMethod());
+        } else {
             throw new IllegalArgumentException("Check completed");
         }
 

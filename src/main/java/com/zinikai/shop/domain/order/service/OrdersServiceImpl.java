@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import static com.zinikai.shop.domain.order.entity.QOrders.orders;
@@ -38,7 +39,6 @@ public class OrdersServiceImpl implements OrdersService {
     private final OrdersRepository ordersRepository;
     private final MemberRepository memberRepository;
     private final OrderItemService orderItemService;
-    private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
 
     @Override
@@ -54,14 +54,20 @@ public class OrdersServiceImpl implements OrdersService {
             throw new IllegalArgumentException("MemberShip IDs do not match");
         }
 
-        validateAmountAndPaymentMethod(requestDto.getTotalAmount(), requestDto.getPaymentMethod());
+
+
+        BigDecimal totalAmount = calculateTotalAmount(requestDto.getOrderItems());
+
+        validateAmountAndPaymentMethod(totalAmount, requestDto.getPaymentMethod());
 
         Orders orders = Orders.builder()
                 .member(member)
-                .totalAmount(requestDto.getTotalAmount())
+                .totalAmount(totalAmount)
                 .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
                 .build();
+
+
 
         Orders savedOrders = ordersRepository.save(orders);
 
@@ -145,4 +151,21 @@ public class OrdersServiceImpl implements OrdersService {
             throw new IllegalArgumentException("Please choose the payment method");
         }
     }
+
+    public BigDecimal calculateTotalAmount(List<OrderItemRequestDto> orderItems){
+    BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (OrderItemRequestDto item : orderItems) {
+
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("Not found product ID"));
+
+            BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(item.getQuantity()));
+            totalAmount = totalAmount.add(itemTotal);
+        }
+        return totalAmount;
+    }
 }
+
+
+
