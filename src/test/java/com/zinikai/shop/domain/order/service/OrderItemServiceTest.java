@@ -118,8 +118,8 @@ class OrderItemServiceTest {
 
 
         PageRequest pageable = PageRequest.of(0, 10);
-        List<OrderItemResponseDto> mockOrderItems = List.of(orderItem.toResponseDto());
-        Page<OrderItemResponseDto> mockOrderItem = new PageImpl<>(mockOrderItems, pageable, mockOrderItems.size());
+        List<OrderItem> mockOrderItems = List.of(orderItem);
+        Page<OrderItem> mockOrderItem = new PageImpl<>(mockOrderItems, pageable, mockOrderItems.size());
 
         when(orderItemRepository.findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(),pageable)).thenReturn(mockOrderItem);
 
@@ -130,9 +130,7 @@ class OrderItemServiceTest {
         //then
         assertNotNull(result);
         assertEquals(mockOrderItems.size(),result.getTotalElements());
-        verify(orderItemRepository, times(1)).findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOrderItemUud(),pageable);
-
-
+        verify(orderItemRepository, times(1)).findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(),pageable);
 
     }
 

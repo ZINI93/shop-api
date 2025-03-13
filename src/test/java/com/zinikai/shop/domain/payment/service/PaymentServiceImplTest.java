@@ -1,8 +1,10 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.Orders;
+import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
@@ -33,22 +35,20 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
 
-    @InjectMocks
-    PaymentServiceImpl paymentService;
+    @InjectMocks PaymentServiceImpl paymentService;
 
-    @Mock
-    PaymentRepository paymentRepository;
+    @Mock PaymentRepository paymentRepository;
 
-    @Mock
-    OrdersRepository ordersRepository;
+    @Mock OrderItemRepository orderItemRepository;
+    @Mock MailService mailService;
 
-    @Mock
-    MemberRepository memberRepository;
+    @Mock OrdersRepository ordersRepository;
+
+    @Mock MemberRepository memberRepository;
 
     PaymentRequestDto requestDto;
     Payment payment;
     Member member;
-
     Orders orders;
 
     private void setMemberId(Member member, Long id) throws Exception {
@@ -72,10 +72,10 @@ class PaymentServiceImplTest {
     @BeforeEach
     void setup() throws Exception {
 
-        member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
+        member = Member.builder().email("1234@naver.com").name("zini").memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member, 1L);
 
-        orders = Orders.builder().build();
+        orders = Orders.builder().member(member).orderUuid(UUID.randomUUID().toString()).build();
         setOrdersId(orders, 1L);
 
         payment = new Payment(
@@ -88,9 +88,7 @@ class PaymentServiceImplTest {
         setPaymentId(payment,1L);
 
         requestDto = new PaymentRequestDto(
-                payment.getOrders().getId(),
-                payment.getStatus(),
-                payment.getPaymentMethod()
+                payment.getOrders().getId()
         );
 
     }
@@ -98,13 +96,16 @@ class PaymentServiceImplTest {
     @Test
     void createPayment() {
         //given
-
         when(memberRepository.findById(member.getId())).thenReturn(Optional.ofNullable(member));
+        when(ordersRepository.findById(orders.getId())).thenReturn(Optional.ofNullable(orders));
+        when(orderItemRepository.findByOrders(orders)).thenReturn(List.of());
         when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 
         //when
         PaymentResponseDto result = paymentService.createPayment(member.getId(), requestDto);
+        mailService.sendPaymentCompletedEmail(orders.getMember().getEmail(),orders.getMember().getName(),orders.getOrderUuid(),orders.getTotalAmount(),orders.getPaymentMethod());
+
 
         //then
         assertNotNull(result);
@@ -119,8 +120,8 @@ class PaymentServiceImplTest {
         //given
         PageRequest pageable = PageRequest.of(0, 10);
 
-        List<PaymentResponseDto> mockData = List.of(payment.toResponse());
-        Page<PaymentResponseDto> mockPage = new PageImpl<>(mockData, pageable, mockData.size());
+        List<Payment> mockData = List.of(payment);
+        Page<Payment> mockPage = new PageImpl<>(mockData, pageable, mockData.size());
 
         when(paymentRepository.findAllByOwnerUuid(member.getMemberUuid(),pageable)).thenReturn(mockPage);
         //when

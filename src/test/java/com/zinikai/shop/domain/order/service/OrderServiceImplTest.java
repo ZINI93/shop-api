@@ -75,7 +75,6 @@ class OrderServiceImplTest {
 
         ordersRequest = new OrdersRequestDto(
                 orders.getMember().getId(),
-                orders.getTotalAmount(),
                 orders.getStatus(),
                 orders.getPaymentMethod()
         );
@@ -159,7 +158,6 @@ class OrderServiceImplTest {
         //given
 
         OrdersUpdateDto updateOrder = OrdersUpdateDto.builder()
-                .totalAmount(ordersRequest.getTotalAmount())
                 .paymentMethod(ordersRequest.getPaymentMethod())
                 .status(Status.COMPLETED)
                 .build();
