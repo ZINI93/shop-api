@@ -204,5 +204,10 @@ application-local.properties
 #build/
 out/
 
+# .gitignore
+# JAR 파일은 무시하지 않음
+!build/libs/*.jar
+!target/*.jar
+
 # Ignore dependency directories
 node_modules/
