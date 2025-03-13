@@ -1,14 +1,15 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17
+# 1. JDK 17을 사용하여 빌드
+FROM openjdk:17 AS build
+WORKDIR /app
+COPY . .
+RUN ./gradlew build || ./mvnw package
 
-# Set the working directory
+# 2. 실행 환경 설정
+FROM openjdk:17
 WORKDIR /app
 
-# Copy the application JAR file
-COPY build/libs/*.jar app.jar
+# 3. 빌드한 JAR 파일을 복사
+COPY --from=build /app/build/libs/*.jar app.jar
 
-# Expose the port the app runs on
-EXPOSE 8080
-
-# Command to run the application
+# 4. 실행
 CMD ["java", "-jar", "app.jar"]
