@@ -65,7 +65,7 @@ class CartServiceImplTest {
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member,1L);
 
-        product = Product.builder().stock(10).build();
+        product = Product.builder().stock(100).build();
         setProductId(product,1L);
 
         cart = new Cart(member , product, 10, UUID.randomUUID().toString());
@@ -118,7 +118,7 @@ class CartServiceImplTest {
     void TestCartUpdate(){
         //given
 
-        CartUpdateDto updatedCard = CartUpdateDto.builder().quantity(5).build();
+        CartUpdateDto updatedCard = CartUpdateDto.builder().quantity(10).build();
 
         when(cartRepository.findByMemberMemberUuidAndCartUuid(member.getMemberUuid(), cart.getCartUuid())).thenReturn(Optional.ofNullable(cart));;
 
@@ -127,7 +127,7 @@ class CartServiceImplTest {
 
         //then
         assertNotNull(result);
-        assertEquals(5,result.getQuantity());
+        assertEquals(10,result.getQuantity());
         assertNotEquals(-1, result.getQuantity());
         verify(cartRepository,times(1)).findByMemberMemberUuidAndCartUuid(member.getMemberUuid(), cart.getCartUuid());
     }

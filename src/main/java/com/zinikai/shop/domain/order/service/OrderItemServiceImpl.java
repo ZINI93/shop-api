@@ -73,6 +73,15 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     }
 
+    @Override
+    public Page<OrderItemResponseDto> getSalesHistory(String ownerUuid, Pageable pageable) {
+
+        Page<OrderItem> salesProducts = orderItemRepository.findByProductOwnerUuid(ownerUuid, pageable);
+
+        return salesProducts.map(OrderItem::toResponseDto);
+
+    }
+
     private void matchMemberUuid(String memberUuid, OrderItem orderItem) {
         if (!Objects.equals(orderItem.getOwnerUuid(), memberUuid)) {
             throw new IllegalArgumentException("Member UUID dose not match the order owner");

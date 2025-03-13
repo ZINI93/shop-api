@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.member.service;
 
+import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
@@ -31,8 +32,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
-    @Mock
-    private MemberRepository memberRepository;
+    @Mock private MemberRepository memberRepository;
+
+    @Mock private MailService mailService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -88,6 +90,7 @@ class MemberServiceTest {
         when(memberRepository.save(any(Member.class))).thenReturn(member);
 
         //when
+        mailService.sendWelcomeEmail(member.getEmail(),member.getName());
         MemberResponseDto savedMember = memberService.createMember(requestDto);
 
         //then

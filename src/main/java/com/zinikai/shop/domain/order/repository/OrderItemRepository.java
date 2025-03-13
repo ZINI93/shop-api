@@ -16,6 +16,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     List<OrderItem> findByOrders(Orders orders);
     Page<OrderItem> findAllByOwnerUuidOrderByCreatedAtDesc(String ownerUuid, Pageable pageable);
-
+    Page<OrderItem> findByProductOwnerUuid(String OwnerUuid, Pageable pageable);
     Optional<OrderItem> findByOwnerUuidAndOrderItemUuid(String ownerUuid,String orderItemUuid);
 }

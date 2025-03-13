@@ -25,7 +25,7 @@ public class OrderItemApiController {
 
     @GetMapping
     public ResponseEntity<Page<OrderItemResponseDto>> getOrderItems(Authentication authentication,
-                                                                    @PageableDefault(size = 10,page = 0)Pageable pageable){
+                                                                    @PageableDefault(size = 20,page = 0)Pageable pageable){
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();
@@ -33,6 +33,19 @@ public class OrderItemApiController {
         Page<OrderItemResponseDto> orderItems = orderItemService.getOrderItems(memberUuid, pageable);
 
         return ResponseEntity.ok(orderItems);
+
+    }
+
+    @GetMapping("/sales-products")
+    public ResponseEntity<Page<OrderItemResponseDto>> getSalesProducts(Authentication authentication,
+                                                                       @PageableDefault(size = 20, page = 0) Pageable pageable){
+
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        Page<OrderItemResponseDto> salesHistory = orderItemService.getSalesHistory(memberUuid, pageable);
+
+        return ResponseEntity.ok(salesHistory);
 
     }
 

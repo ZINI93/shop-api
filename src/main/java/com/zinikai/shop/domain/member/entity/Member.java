@@ -2,10 +2,13 @@ package com.zinikai.shop.domain.member.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
+import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -40,10 +43,8 @@ public class Member extends TimeStamp {
     @Column(name = "member_uuid",unique = true, nullable = false, updatable = false)
     private String memberUuid;
 
-
     @Column(nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
-
 
     @Builder
     public Member(String email, String password, String name, String phoneNumber, Address address, MemberRole role, String memberUuid) {
@@ -74,8 +75,11 @@ public class Member extends TimeStamp {
         this.address = address;
     }
 
-
-    public void increaseBalance(BigDecimal amount){
+    //販売金　増加
+    public void increaseBalance(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Amount must be a positive value");
+        }
         this.balance = this.balance.add(amount);
     }
 }
