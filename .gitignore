@@ -200,8 +200,8 @@ application-local.properties
 .vscode/
 
 # Ignore build directories
-target/
-build/
+#target/
+#build/
 out/
 
 # Ignore dependency directories
