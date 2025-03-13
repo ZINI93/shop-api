@@ -1,11 +1,10 @@
-# OpenJDK 17 이미지 사용
-FROM openjdk:17-jdk-slim
-
-# 애플리케이션이 위치할 디렉토리 설정
+# 1. Java 17 이미지 사용
+FROM openjdk:17
 WORKDIR /app
 
-# 빌드한 JAR 파일을 컨테이너 내로 복사
-COPY target/joy-project.jar /app/joy-project.jar
+# 2. JAR 파일 복사 (Gradle 기준)
+COPY build/libs/*.jar app.jar
 
-# 애플리케이션 실행
-ENTRYPOINT ["java", "-jar", "joy-project.jar"]
+# 3. 실행 명령어
+CMD ["java", "-jar", "app.jar"]
+
