@@ -25,7 +25,11 @@ spring:
             enable: true
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
 jwt:
   secret: ${JWT_SECRET_KEY}
+logging:
+  level:
+    root: INFO
+    com.zinikai.shop: DEBUG

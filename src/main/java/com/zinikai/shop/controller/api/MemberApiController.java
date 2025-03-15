@@ -26,7 +26,6 @@ public class MemberApiController {
         MemberResponseDto member = memberService.createMember(requestDto);
         URI location = URI.create("/api/member" + member.getId());
         return ResponseEntity.created(location).body(member);
-        // 회원가입은 201로 반환하는게 좋이서 위에 처럼 구현
     }
 
     @GetMapping("/members/me")
