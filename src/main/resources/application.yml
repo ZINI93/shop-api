@@ -1,4 +1,5 @@
-
+server:
+  port: ${PORT:8080}
 spring:
   application:
     name: zini-shop
