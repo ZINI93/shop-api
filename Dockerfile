@@ -1,26 +1,33 @@
-# 1. JDK 17을 사용하여 빌드
-FROM openjdk:17 AS build
+# Stage 1: Build the application
+FROM openjdk:17-slim AS build
 WORKDIR /app
 
-# gradlew 및 필요한 파일 복사
+# 필요한 패키지 설치
+RUN apt-get update && apt-get install -y findutils
+
+# Gradle 설정 파일 복사
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 COPY src src
 
-# gradlew 실행 권한 추가
+# gradlew 실행 권한 부여
 RUN chmod +x gradlew
 
-# 빌드 실행
-RUN ./gradlew build -x test || ./mvnw package -DskipTests
+# 의존성 다운로드
+RUN ./gradlew dependencies --no-daemon
 
-# 2. 실행 환경을 설정
-FROM openjdk:17
+# 프로젝트 빌드
+RUN ./gradlew build -x test
+
+# Stage 2: Create the final image
+FROM openjdk:17-slim
 WORKDIR /app
 
-# 3. 빌드한 JAR 파일을 복사
+# 빌드된 JAR 파일 복사
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# 4. 애플리케이션 실행
-CMD ["java", "-jar", "app.jar"]
+# 애플리케이션 실행
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar", "--server.port=${PORT}"]
