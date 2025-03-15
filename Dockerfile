@@ -1,4 +1,4 @@
-# 1. 빌드 스테이지 (Gradle 캐시 활용)
+# 1. 빌드 스테이지 (Gradle 사용)
 FROM openjdk:17 AS build
 WORKDIR /app
 
@@ -9,8 +9,7 @@ RUN chmod +x gradlew
 
 # 의존성만 먼저 다운로드 (캐시 활용)
 COPY build.gradle settings.gradle ./
-COPY src/main src/main
-RUN ./gradlew dependencies --no-daemon
+RUN ./gradlew dependencies --no-daemon || true
 
 # 전체 프로젝트 복사 후 빌드
 COPY . .
