@@ -25,7 +25,7 @@ spring:
             enable: true
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      ddl-auto: create
     show-sql: true
 jwt:
   secret: ${JWT_SECRET_KEY}
