@@ -11,7 +11,7 @@ spring:
       maximum-pool-size: 20
   batch:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
   mail:
     host: smtp.gmail.com
     port: 587
@@ -23,5 +23,9 @@ spring:
           auth: true
           starttls:
             enable: true
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+    show-sql: true
 jwt:
   secret: ${JWT_SECRET_KEY}
