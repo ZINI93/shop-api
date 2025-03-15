@@ -11,7 +11,7 @@ services:
       - "3307:3306"
     environment:
       - MYSQL_DATABASE=shop_local
-      - MYSQL_USER=shop_local_user
-      - MYSQL_PASSWORD=251001
-      - MYSQL_ROOT_PASSWORD=reservation0320
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
       - TZ=Asia/Seoul
