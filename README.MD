@@ -1,8 +1,13 @@
 # フリーマーケット API
 
 ## 1. **API 概要**
-このプロジェクトは、中古取引プラットフォームを実装したAPIで、すべてのユーザーが商品を登録して販売でき、他のユーザーがその商品を検索して購入できる機能を提供します。### **主要機能**
+このプロジェクトは、中古取引プラットフォームのAPIです。すべてのユーザーが商品を登録して販売でき、他のユーザーが商品を検索・購入できる機能を提供します。
 
+現在、このAPIは Railway を通じてデプロイされており、以下のURLからアクセスできます。                 
+URL: shop-api-production-3d05.up.railway.app
+
+API のテストを行う際は、本ドキュメントを参考にしてください。
+### **主要機能**
 - **販売者**: `商品を登録し、在庫を管理できます。販売金額から5%の手数料を差し引いた額が残高に反映されます。`
 - **購入者**: `商品を検索し、カートに追加して注文および決済を行えます。`
 - **管理者**: `システム全体をモニタリングし、ユーザーや商品を管理できます。`
@@ -16,10 +21,11 @@
 
 ## 🛠️ 技術スタック
 
-- **Backend**: Java, Spring Boot, Spring Security, JPA, QueryDsl
-- **Database**: MySQL
-- **DevOps**: Docker, Docker Compose
+- **バックエンド**: Java, Spring Boot, Spring Security, JPA, QueryDsl
+- **データベース**: MySQL
+- **DevOps**: Docker, Docker Compose, GitHub CI/CD , railway
 ---
+
 ## 2. **認証方式**
 - **認証方法:** `JWTトークン方式`
 - **トークン発行エンドポイント:** `/authenticate`
@@ -27,6 +33,8 @@
 - **有効時間:** `10時間`
 - ----
 ## 3. **エンドポイント一覧**
+
+### URL : shop-api-production-3d05.up.railway.app 
 
 ### 3.1. **認証**
 
@@ -58,14 +66,18 @@
 #### **1) 会員登録**
 - **HTTPメソッド:** `POST`
 - **URL:** `/api/join`
+- **リクエストパラメータ説明:**:  
+*Email*: `有効なメールアドレス形式 (example@email.com)`  
+*Password* : `8～20文字, 数字・大文字・小文字・特殊文字を含む必要あり`  
+*phoneNumber* : `070-xxxx-xxxx, 080-xxxx-xxxx, 090-xxxx-xxxx の形式のみ有効`
 
 **リクエスト本文:**
 ```json
 {
-  "email": "qwas566@gmail.com",
-  "password": "Abc1234!@",
+  "email": "zini@gmail.com",  
+  "password": "Abc1234!@", 
   "name": "kakao",
-  "phoneNumber": "080-1234-5678",
+  "phoneNumber": "080-1234-5678", 
   "address": {
     "street": "higasiarima",
     "city": "kanagawa",
