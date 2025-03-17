@@ -30,7 +30,4 @@ spring:
     show-sql: true
 jwt:
   secret: ${JWT_SECRET_KEY}
-logging:
-  level:
-    root: INFO
-    com.zinikai.shop: DEBUG
+
