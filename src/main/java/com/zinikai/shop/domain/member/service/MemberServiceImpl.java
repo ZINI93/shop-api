@@ -46,7 +46,6 @@ public class MemberServiceImpl implements MemberService {
         log.info("Created savedMember:{}", member);
 
         return memberRepository.save(member).toResponseDto();
-
     }
 
 

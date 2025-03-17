@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static com.zinikai.shop.domain.product.entity.QProduct.*;
 
@@ -48,11 +49,11 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                 .fetch();
 
         // count 쿼리
-        Long total = queryFactory
+        Long total = Optional.ofNullable(queryFactory
                 .select(product.id.count()) // count만 계산
                 .from(product)
                 .where(predicate)
-                .fetchOne();
+                .fetchOne()).orElseThrow();
 
         return new PageImpl<>(products, pageable , total);
 
@@ -61,7 +62,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
     private Predicate productOwnerUuidContains(String ownerUuid) {
         return product.ownerUuid.eq(ownerUuid);
     }
-
 
     //　価格範囲設定
     private BooleanExpression priceRangeCond(BigDecimal minPrice, BigDecimal maxPrice) {
@@ -75,10 +75,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
             return product.price.isNotNull().and(product.price.between(minPrice, maxPrice));
         }
     }
-    private BooleanExpression priceBetween(BigDecimal maxPrice, BigDecimal minPrice) {
-        return null;
-    }
-
     private BooleanExpression productNameContains(String keyword) {
         if (keyword == null){
             return Expressions.TRUE;

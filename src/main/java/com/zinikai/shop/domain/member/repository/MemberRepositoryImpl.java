@@ -1,10 +1,10 @@
 package com.zinikai.shop.domain.member.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.QMemberResponseDto;
-import com.zinikai.shop.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,10 +17,9 @@ import static com.zinikai.shop.domain.member.entity.QMember.*;
 
 
 @RequiredArgsConstructor
-public class MemberRepositoryImpl implements MemberRepositoryCustom{
+public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
-private final JPAQueryFactory queryFactory;
-
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Page<MemberResponseDto> findByNameAndPhoneNumber(String name, String phoneNumber, Pageable pageable) {
@@ -33,8 +32,8 @@ private final JPAQueryFactory queryFactory;
                         member.phoneNumber,
                         member.address))
                 .from(member)
-                .where(phoneNumberEq(phoneNumber),
-                        nameEq(name))
+                .where(phoneNumberCond(phoneNumber),
+                        nameCond(name))
                 .orderBy(member.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -45,25 +44,25 @@ private final JPAQueryFactory queryFactory;
         Long total = Optional.ofNullable(queryFactory
                 .select(member.id.count())
                 .from(member)
-                .where(phoneNumberEq(phoneNumber),
-                        nameEq(name))
-                .orderBy(member.id.desc())
                 .fetchOne()).orElseThrow();  // fetchOne 을 쓸때 null check
 
-        return new PageImpl<>(content,pageable,total);
+        return new PageImpl<>(content, pageable, total);
     }
 
-    private BooleanExpression phoneNumberEq(String phoneNumberCnd) {
-        return phoneNumberCnd != null && !phoneNumberCnd.isEmpty()  ? member.phoneNumber.contains(phoneNumberCnd) : null;
+    private BooleanExpression phoneNumberCond(String phoneNumberCnd) {
+        return containCond(phoneNumberCnd, member.phoneNumber);
+
     }
 
-    private BooleanExpression nameEq(String nameCnd) {
-        return nameCnd != null && !nameCnd.isEmpty()? member.name.contains(nameCnd) : null;
-        //contains 부분 속한 이름도 조회
+    private BooleanExpression nameCond(String nameCnd) {
+        return containCond(nameCnd, member.name);
+
     }
 
-
-    private boolean isNotEmpty(String value){
-        return value!=null&& !value.isEmpty();
-    }  // 검증로직
+    private static BooleanExpression containCond(String value, StringPath field) {
+        if (value == null || value.isEmpty()){
+            return null;
+        }
+        return field.containsIgnoreCase(value);
+    }
 }

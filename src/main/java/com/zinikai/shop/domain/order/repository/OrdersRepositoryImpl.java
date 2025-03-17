@@ -18,10 +18,11 @@ import org.springframework.security.config.annotation.SecurityBuilder;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static com.zinikai.shop.domain.order.entity.QOrders.*;
 
@@ -36,7 +37,6 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
     public Page<OrdersResponseDto> searchOrders(String memberUuid, Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable) {
         // 조건식 생성
         BooleanExpression predicate = buildPredicate(memberUuid, status, startDate, endDate, minAmount, maxAmount);
-
 
         //정렬 처리
         OrderSpecifier<?> sortOrder = getSortOrder(sortField);
@@ -59,67 +59,72 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
                 .fetch();
 
         //전체 데이터 개수
-        Long total = queryFactory
+        Long total = Optional.ofNullable(queryFactory
                 .select(QOrders.orders.count())
                 .from(QOrders.orders)
-                .where(predicate)
-                .fetchOne();
+                .fetchOne()).orElseThrow();
 
-        return new PageImpl<>(orders,pageable,total);
-
+        return new PageImpl<>(orders, pageable, total);
 
     }
 
     private BooleanExpression buildPredicate(String memberUuid, Status status, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount) {
-        return filterByMember(memberUuid)
-                .and(filterByStatus(status))
-                .and(filterByDateRange(startDate, endDate))
-                .and(filterByAmountRange(minAmount, maxAmount));
+        return Stream.of(filterByMember(memberUuid)
+                        .and(filterByStatus(status))
+                        .and(filterByDateRange(startDate, endDate))
+                        .and(filterByAmountRange(minAmount, maxAmount)
+                        )).filter(Objects::nonNull)
+                .reduce(Expressions.TRUE, BooleanExpression::and);
     }
 
-    private BooleanExpression filterByMember(String memberUuid){
+    private BooleanExpression filterByMember(String memberUuid) {
+        if (memberUuid == null || memberUuid.isEmpty()){
+            return Expressions.TRUE;
+        }
         return orders.member.memberUuid.eq(memberUuid);
     }
 
     private BooleanExpression filterByStatus(Status status) {
-        if (status == null){
-            return Expressions.TRUE;  // 제외시키고 검색가능 하게하는 기능
+        if (status == null) {
+            return null;
         }
         return orders.status.eq(status);
     }
 
     private BooleanExpression filterByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate == null && endDate == null){
+        if (startDate == null && endDate == null) {
             return Expressions.TRUE;   // querydslはANDを使う時, NULLをそのまま、使ったらNullPointExceptionの　可能性がありま。
-        } else if (startDate == null){
+        } else if (startDate == null) {
             return orders.createdAt.isNotNull().and(orders.createdAt.loe(endDate));
-        } else if ( endDate == null){
+        } else if (endDate == null) {
             return orders.createdAt.isNotNull().and(orders.createdAt.goe(startDate));
-        }else {
-            return orders.createdAt.isNotNull().and(orders.createdAt.between(startDate,endDate));
+        } else {
+            return orders.createdAt.isNotNull().and(orders.createdAt.between(startDate, endDate));
         }
     }
 
     private BooleanExpression filterByAmountRange(BigDecimal minAmount, BigDecimal maxAmount) {
-        if (minAmount == null && maxAmount == null){
+        if (minAmount == null && maxAmount == null) {
             return Expressions.TRUE;
-        } else if (minAmount == null){
+        } else if (minAmount == null) {
             return orders.totalAmount.isNotNull().and(orders.totalAmount.loe(maxAmount));
-        } else if ( maxAmount == null){
+        } else if (maxAmount == null) {
             return orders.totalAmount.isNotNull().and(orders.totalAmount.goe(minAmount));
-        } else if (minAmount.compareTo(maxAmount) == 0){
+        } else if (minAmount.compareTo(maxAmount) == 0) {
             return orders.totalAmount.isNotNull().and(orders.totalAmount.goe(minAmount).and(orders.totalAmount.loe(maxAmount)));
         }
         return orders.totalAmount.isNotNull().and(orders.totalAmount.between(minAmount, maxAmount));
     }
 
-    //　上のコードを改善コード
+//    　上のコードを改善コード
     private static final Map<String, OrderSpecifier<?>> SORT_FIELDS = Map.of(
-            "createdAt", orders.createdAt.desc(),
-            "totalAmount", orders.totalAmount.desc()
+            "created_at", orders.createdAt.desc(),
+            "total_amount", orders.totalAmount.desc()
     );
+
     private OrderSpecifier<?> getSortOrder(String sortField) {
-        return SORT_FIELDS.getOrDefault(sortField.toLowerCase(),orders.id.desc());
+        return SORT_FIELDS.getOrDefault(sortField.toLowerCase(), orders.createdAt.desc());
     }
+
 
 }
