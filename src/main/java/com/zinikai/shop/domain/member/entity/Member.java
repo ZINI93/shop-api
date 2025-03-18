@@ -53,7 +53,7 @@ public class Member extends TimeStamp {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.address = address;
-        this.role = role;
+        this.role = MemberRole.USER;
         this.memberUuid = UUID.randomUUID().toString();
     }
 

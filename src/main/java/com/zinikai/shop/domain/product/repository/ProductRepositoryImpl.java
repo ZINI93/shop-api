@@ -1,13 +1,11 @@
 package com.zinikai.shop.domain.product.repository;
 
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.QProductResponseDto;
-import com.zinikai.shop.domain.product.entity.QProduct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -16,13 +14,14 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.zinikai.shop.domain.product.entity.QProduct.*;
 
 @Repository
 @RequiredArgsConstructor
-public class ProductRepositoryImpl implements ProductRepositoryCustom{
+public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -55,11 +54,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                 .where(predicate)
                 .fetchOne()).orElseThrow();
 
-        return new PageImpl<>(products, pageable , total);
+        return new PageImpl<>(products, pageable, total);
 
     }
 
-    private Predicate productOwnerUuidContains(String ownerUuid) {
+    private BooleanExpression  productOwnerUuidContains(String ownerUuid) {
+        if (ownerUuid == null || ownerUuid.isEmpty()) {
+            return null;
+        }
         return product.ownerUuid.eq(ownerUuid);
     }
 
@@ -75,18 +77,21 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
             return product.price.isNotNull().and(product.price.between(minPrice, maxPrice));
         }
     }
+
     private BooleanExpression productNameContains(String keyword) {
-        if (keyword == null){
-            return Expressions.TRUE;
+        if (keyword == null || keyword.isEmpty()) {
+            return null;
         }
         return product.name.containsIgnoreCase(keyword);
     }
 
-    private OrderSpecifier<?> getSortOrder(String sortField){
-        if ("price".equalsIgnoreCase(sortField)){
-            return product.price.asc();
-        }else {
-            return product.id.asc();
-        }
+    private static final Map<String, OrderSpecifier<?>> SORT_FIELDS = Map.of(
+            "price_desc", product.price.desc(),
+            "price_asc", product.price.asc(),
+            "create_at", product.createdAt.desc()
+    );
+
+    private OrderSpecifier<?> getSortOrder(String sortField) {
+        return SORT_FIELDS.getOrDefault(sortField.toLowerCase(), product.createdAt.desc());
     }
 }

@@ -38,7 +38,7 @@ public class MemberServiceImpl implements MemberService {
                 .name(requestDto.getName())
                 .phoneNumber(requestDto.getPhoneNumber())
                 .address(requestDto.getAddress())
-                .role(MemberRole.USER)
+//                .role(MemberRole.USER)
                 .build();
 
         mailService.sendWelcomeEmail(member.getEmail(),member.getName());
