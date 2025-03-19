@@ -79,7 +79,7 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
 
     private BooleanExpression filterByMember(String memberUuid) {
         if (memberUuid == null || memberUuid.isEmpty()){
-            return Expressions.TRUE;
+            return null;
         }
         return orders.member.memberUuid.eq(memberUuid);
     }

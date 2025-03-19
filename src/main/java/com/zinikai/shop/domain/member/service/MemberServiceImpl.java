@@ -5,7 +5,6 @@ import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
 import com.zinikai.shop.domain.member.entity.Member;
-import com.zinikai.shop.domain.member.entity.MemberRole;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +36,6 @@ public class MemberServiceImpl implements MemberService {
                 .password(encodedPassword)
                 .name(requestDto.getName())
                 .phoneNumber(requestDto.getPhoneNumber())
-                .address(requestDto.getAddress())
-                .role(MemberRole.USER)
                 .build();
 
         mailService.sendWelcomeEmail(member.getEmail(),member.getName());
@@ -83,8 +80,7 @@ public class MemberServiceImpl implements MemberService {
         member.updateInfo(
                 encodedPassword,
                 updateDto.getName(),
-                updateDto.getPhoneNumber(),
-                updateDto.getAddress()
+                updateDto.getPhoneNumber()
         );
 
         log.info("updated member:{}", member);

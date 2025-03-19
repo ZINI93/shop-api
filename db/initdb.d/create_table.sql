@@ -1,22 +1,33 @@
 create TABLE `member` (
     `member_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `email` VARCHAR(255) NOT NULL UNIQUE,
-    `password` VARCHAR(255) NULL,
+    `password` VARCHAR(255) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
-    `phone_number` VARCHAR(100) NOT NULL UNIQUE,
-    `role` VARCHAR(25) NOT NULL,
+    `phone_number` VARCHAR(30) NOT NULL UNIQUE,
+    `role` VARCHAR(10) NOT NULL,
     `member_uuid` VARCHAR(36) NOT NULL UNIQUE,
-    `balance` DECIMAL(10,2) NOT NULL,
-
-    `street` VARCHAR(255) NOT NULL,
-    `city` VARCHAR(255) NOT NULL,
-    `zipcode` VARCHAR(25) NOT NULL,
-
+    `balance` DECIMAL(10,2) NOT NULL CHECK (`balance` >= 0),
 
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
     CONSTRAINT `chk_member_role` CHECK (`role` IN ('USER', 'ADMIN'))
+);
+
+create Table `address` (
+    `address_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `zipcode` VARCHAR(10) NOT NULL,
+    `state` VARCHAR(255) NOT NULL,
+    `city` VARCHAR(255) NOT NULL,
+    `street` VARCHAR(255) NOT NULL,
+    `address_uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `member_id` BIGINT NOT NULL,
+
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_address_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE
 );
 
 create TABLE `product` (

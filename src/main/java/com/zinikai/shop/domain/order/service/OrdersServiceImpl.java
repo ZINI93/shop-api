@@ -55,7 +55,6 @@ public class OrdersServiceImpl implements OrdersService {
         }
 
 
-
         BigDecimal totalAmount = calculateTotalAmount(requestDto.getOrderItems());
 
         validateAmountAndPaymentMethod(totalAmount, requestDto.getPaymentMethod());
@@ -66,8 +65,6 @@ public class OrdersServiceImpl implements OrdersService {
                 .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
                 .build();
-
-
 
         Orders savedOrders = ordersRepository.save(orders);
 

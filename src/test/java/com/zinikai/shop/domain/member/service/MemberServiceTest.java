@@ -4,7 +4,6 @@ import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
-import com.zinikai.shop.domain.member.entity.Address;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.entity.MemberRole;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
@@ -60,7 +59,6 @@ class MemberServiceTest {
                 "password",
                 "zini",
                 "080-1234-1234",
-                new Address("kanagawa", "miyamae", "123-123"),
                 MemberRole.USER
         );
 
@@ -69,7 +67,6 @@ class MemberServiceTest {
                 requestDto.getPassword(),
                 requestDto.getName(),
                 requestDto.getPhoneNumber(),
-                requestDto.getAddress(),
                 requestDto.getRole(),
                 UUID.randomUUID().toString()
         );
@@ -150,8 +147,7 @@ class MemberServiceTest {
         MemberUpdateDto memberUpdateDto = new MemberUpdateDto(
                 "pasword1234",
                 "yuna",
-                "080-1111-1111",
-                new Address("saitama", "kakaku", "123-153")
+                "080-1111-1111"
         );
 
         when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.of(member));
@@ -165,7 +161,6 @@ class MemberServiceTest {
         assertNotNull(updateMember);
         assertEquals(memberUpdateDto.getName(), updateMember.getName());
         assertEquals(memberUpdateDto.getPhoneNumber(), updateMember.getPhoneNumber());
-        assertEquals(memberUpdateDto.getAddress(), updateMember.getAddress());
     }
 
 
