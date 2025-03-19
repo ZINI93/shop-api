@@ -14,5 +14,5 @@ public interface CartService {
     CartResponseDto createCart(Long memberId, CartRequestDto requestDto);
     Page<CartResponseDto> getCarts(String ownerUuid, Pageable pageable);
     CartResponseDto updateCart(String ownerUuid, String cartUuid, CartUpdateDto updateDto);
-    void deleteCart(String ownerUuid, String paymentUuid);
+    void deleteCart(String ownerUuid, String cartUuid);
 }

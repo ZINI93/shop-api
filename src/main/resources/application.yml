@@ -1,5 +1,3 @@
-server:
-  port: ${PORT}
 spring:
   application:
     name: zini-shop
