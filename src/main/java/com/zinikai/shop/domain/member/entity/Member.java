@@ -1,6 +1,7 @@
 package com.zinikai.shop.domain.member.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
+import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
@@ -33,10 +34,6 @@ public class Member extends TimeStamp {
     @Column(nullable = false, unique = true,name = "phone_number")
     private String phoneNumber;
 
-    @Embedded
-    @Column(nullable = false)
-    private Address address;
-
     @Enumerated(EnumType.STRING)
     private MemberRole role;
 
@@ -47,12 +44,11 @@ public class Member extends TimeStamp {
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Builder
-    public Member(String email, String password, String name, String phoneNumber, Address address, MemberRole role, String memberUuid) {
+    public Member(String email, String password, String name, String phoneNumber, MemberRole role, String memberUuid) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phoneNumber = phoneNumber;
-        this.address = address;
         this.role = MemberRole.USER;
         this.memberUuid = UUID.randomUUID().toString();
     }
@@ -62,17 +58,15 @@ public class Member extends TimeStamp {
                 .email(this.email)
                 .name(this.name)
                 .phoneNumber(this.phoneNumber)
-                .address(this.address)
                 .role(this.role)
                 .build();
     }
     
     //アップデート
-    public void updateInfo(String password, String name, String phoneNumber, Address address) {
+    public void updateInfo(String password, String name, String phoneNumber) {
         this.password = password;
         this.name = name;
         this.phoneNumber = phoneNumber;
-        this.address = address;
     }
 
     //販売金　増加

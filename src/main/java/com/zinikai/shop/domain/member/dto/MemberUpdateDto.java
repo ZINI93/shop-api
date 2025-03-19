@@ -1,7 +1,5 @@
 package com.zinikai.shop.domain.member.dto;
 
-import com.zinikai.shop.domain.member.entity.Address;
-import com.zinikai.shop.domain.member.entity.MemberRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,15 +23,10 @@ public class MemberUpdateDto {
     @Pattern(regexp = "^0[789]0-\\d{4}-\\d{4}$", message = "有効な電話番号を入力してください。")
     private String phoneNumber;
 
-    @NotBlank
-    @Valid
-    private Address address; // Address 클래스 활용
 
-
-    public MemberUpdateDto(String password, String name, String phoneNumber, Address address) {
+    public MemberUpdateDto(String password, String name, String phoneNumber) {
         this.password = password;
         this.name = name;
         this.phoneNumber = phoneNumber;
-        this.address = address;
     }
 }

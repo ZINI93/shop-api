@@ -29,8 +29,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                         member.id.as("memberId"),
                         member.email,
                         member.name,
-                        member.phoneNumber,
-                        member.address))
+                        member.phoneNumber))
                 .from(member)
                 .where(phoneNumberCond(phoneNumber),
                         nameCond(name))
