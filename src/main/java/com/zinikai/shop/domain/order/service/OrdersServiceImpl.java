@@ -159,6 +159,10 @@ public class OrdersServiceImpl implements OrdersService {
         Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
 
+        if (orders.getStatus() != Status.CANCELLED){
+            throw new IllegalArgumentException("Can not deleted except fro canceled order");
+        }
+
         matchMemberUuid(memberUuid, orders);
 
         ordersRepository.delete(orders);
