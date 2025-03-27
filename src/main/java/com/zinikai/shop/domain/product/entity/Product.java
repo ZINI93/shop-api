@@ -35,7 +35,6 @@ public class Product extends TimeStamp {
 
     @Column(name = "owner_uuid", nullable = false, updatable = false)
     private String ownerUuid;
-
     @Builder
     public Product(String name, BigDecimal price, String description, Integer stock, String productUuid, String ownerUuid) {
         this.name = name;

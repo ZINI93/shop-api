@@ -7,6 +7,7 @@ create TABLE `member` (
     `role` VARCHAR(10) NOT NULL,
     `member_uuid` VARCHAR(36) NOT NULL UNIQUE,
     `balance` DECIMAL(10,2) NOT NULL CHECK (`balance` >= 0),
+    `hold_balance` DECIMAL(10,2) NOT NULL CHECK (`hold_balance` >= 0),
 
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
@@ -27,6 +28,7 @@ create Table `address` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
+    CONSTRAINT `fk_order_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_address_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE
 );
 
@@ -49,7 +51,9 @@ create TABLE `orders` (
     `total_amount` DECIMAL(19,2) NOT NULL,
     `status` VARCHAR(25) NOT NULL,
     `payment_method` VARCHAR(50) NOT NULL,
+    `seller_uuid` VARCHAR(36) NOT NULL,
     `order_uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `address_id` BIGINT NOT NULL,
 
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
@@ -65,6 +69,7 @@ create TABLE `order_item` (
      `quantity` INTEGER NOT NULL,
      `price` DECIMAL(19,2) NOT NULL,
      `owner_uuid` VARCHAR(36) NOT NULL,
+     `seller_uuid` VARCHAR(36) NOT NULL,
      `order_item_uuid` VARCHAR(36) NOT NULL UNIQUE,
 
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -73,6 +78,29 @@ create TABLE `order_item` (
     CONSTRAINT `fk_order_item_orders` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
     CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON delete CASCADE
 );
+
+create TABLE `delivery` (
+    `delivery_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `orders_id` BIGINT NOT NULL,
+    `address_id` BIGINT NOT NULL,
+    `delivery_status` VARCHAR(36) NOT NULL,
+    `tracking_number` VARCHAR(20) NOT NULL,
+    `carrier` VARCHAR(10) NOT NULL,
+    `owner_uuid` VARCHAR(36) NOT NULL,
+    `buyer_uuid` VARCHAR(36) NOT NULL,
+    `delivery_uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `confirm_delivery` DATETIME NULL,
+
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_delivery_order` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
+    CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON DELETE CASCADE,
+    CONSTRAINT `chk_delivery_status` CHECK (`delivery_status` IN ('PENDING', 'SHIPPED', 'DELIVERED', 'IN_TRANSIT', 'CANCELLED')),
+    CONSTRAINT `chk_carrier` CHECK (`carrier` IN ('YAMATO', 'JAPANPOST'))
+);
+
 
 create TABLE `cart` (
     `cart_id` BIGINT AUTO_INCREMENT PRIMARY KEY,

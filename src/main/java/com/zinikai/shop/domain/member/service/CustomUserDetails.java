@@ -1,25 +1,23 @@
 package com.zinikai.shop.domain.member.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.awt.image.renderable.RenderableImage;
 import java.util.Collection;
 import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
 
     private final Member member;
-
     public CustomUserDetails(Member member) {
         if (member == null) {
             throw new IllegalArgumentException("Member 객체는 null일 수 없습니다.");
         }
         this.member = member;
     }
+
     public Long getMemberId(){
         return member.getId();
     }

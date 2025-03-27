@@ -63,8 +63,7 @@ class AddressServiceImplTest {
                 address.getZipcode(),
                 address.getState(),
                 address.getCity(),
-                address.getStreet(),
-                address.getMember().getMemberUuid()
+                address.getStreet()
         );
     }
 
@@ -81,7 +80,6 @@ class AddressServiceImplTest {
         //then
         assertNotNull(result);
         assertEquals(requestDto.getZipcode(), result.getZipcode());
-        assertEquals(member.getMemberUuid(), result.getMemberUuid());
 
         verify(addressRepository, times(1)).save(any(Address.class));
     }

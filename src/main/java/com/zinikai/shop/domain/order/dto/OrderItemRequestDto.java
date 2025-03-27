@@ -9,15 +9,15 @@ import lombok.Data;
 public class OrderItemRequestDto {
 
     @NotNull
-    private Long productId;
+    private String productUuid;
 
     @NotNull
     private int quantity;
 
 
     @Builder
-    public OrderItemRequestDto(Long productId, int quantity) {
-        this.productId = productId;
+    public OrderItemRequestDto(String productUuid, int quantity) {
+        this.productUuid = productUuid;
         this.quantity = quantity;
     }
 }

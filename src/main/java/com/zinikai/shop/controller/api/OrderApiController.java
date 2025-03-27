@@ -27,15 +27,13 @@ public class OrderApiController {
 
     private final OrdersService orderService;
 
-    //オーダーを作成
     @PostMapping
-    public ResponseEntity<OrdersResponseDto> createOrder(@Valid  @RequestBody OrdersRequestDto requestDto,
+    public ResponseEntity<OrdersResponseDto> createOrder(@Valid @RequestBody OrdersRequestDto requestDto,
                                                          Authentication authentication) {
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        Long memberId = customUserDetails.getMemberId();
+        String memberUuid = getMemberUuid(authentication);
 
-        OrdersResponseDto order = orderService.createOrder(memberId, requestDto);
+        OrdersResponseDto order = orderService.createOrder(memberUuid, requestDto);
         URI location = URI.create("/api/orders" + order.getId());
         return ResponseEntity.created(location).body(order);
 
@@ -43,10 +41,9 @@ public class OrderApiController {
 
     @GetMapping("{orderUuid}")
     public ResponseEntity<OrdersResponseDto> getOrder(@PathVariable String orderUuid,
-                                           Authentication authentication){
+                                                      Authentication authentication) {
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        String memberUuid = customUserDetails.getMemberUuid();
+        String memberUuid = getMemberUuid(authentication);
 
         OrdersResponseDto order = orderService.getOrder(memberUuid, orderUuid);
 
@@ -66,8 +63,7 @@ public class OrderApiController {
             Authentication authentication
     ) {
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        String memberUuid = customUserDetails.getMemberUuid();
+        String memberUuid = getMemberUuid(authentication);
 
         Page<OrdersResponseDto> orders = orderService.searchOrder(memberUuid, status, starDate, endDate, minAmount, maxAmount, sortField, pageable);
 
@@ -75,35 +71,33 @@ public class OrderApiController {
 
     }
 
-    //オーダーをアップデート
+    private String getMemberUuid(Authentication authentication) {
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        return customUserDetails.getMemberUuid();
+    }
 
-    @PutMapping("{orderUuid}")
+
+    @PutMapping("{orderUuid}/cancel")
     public ResponseEntity<OrdersResponseDto> editOrder(@PathVariable String orderUuid,
-                                                       @Valid @RequestBody OrdersUpdateDto updateDto,
                                                        Authentication authentication) {
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        String memberUuid = customUserDetails.getMemberUuid();
+        String memberUuid = getMemberUuid(authentication);
 
-        OrdersResponseDto orderUpdate = orderService.updateOrder(memberUuid, orderUuid, updateDto);
+        OrdersResponseDto orderUpdate = orderService.cancelOrder(memberUuid, orderUuid);
         return ResponseEntity.ok(orderUpdate);
     }
-    //オーダーを削除
 
     @DeleteMapping("{orderUuid}")
     public ResponseEntity<OrdersResponseDto> deleteOrder(@PathVariable String orderUuId,
                                                          Authentication authentication) {
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        String memberUuid = customUserDetails.getMemberUuid();
+        String memberUuid = getMemberUuid(authentication);
 
         orderService.deleteOrder(memberUuid, orderUuId);
         return ResponseEntity.noContent().build();
     }
 
-
     private CustomUserDetails getCustomUserDetails(Authentication authentication) {
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        return customUserDetails;
+        return (CustomUserDetails) authentication.getPrincipal();
     }
 }

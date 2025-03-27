@@ -38,7 +38,7 @@ public class MemberServiceImpl implements MemberService {
                 .phoneNumber(requestDto.getPhoneNumber())
                 .build();
 
-        mailService.sendWelcomeEmail(member.getEmail(),member.getName());
+        mailService.sendWelcomeEmail(member.getEmail(), member.getName());
 
         log.info("Created savedMember:{}", member);
 

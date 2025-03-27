@@ -88,10 +88,13 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private static final Map<String, OrderSpecifier<?>> SORT_FIELDS = Map.of(
             "price_desc", product.price.desc(),
             "price_asc", product.price.asc(),
-            "create_at", product.createdAt.desc()
+            "created_at", product.createdAt.desc()
     );
 
     private OrderSpecifier<?> getSortOrder(String sortField) {
+        if (sortField == null || sortField.isEmpty()){
+            return product.createdAt.desc();
+        }
         return SORT_FIELDS.getOrDefault(sortField.toLowerCase(), product.createdAt.desc());
     }
 }

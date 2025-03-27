@@ -1,13 +1,19 @@
 package com.zinikai.shop.domain.order.service;
 
+import com.zinikai.shop.domain.adress.entity.Address;
+import com.zinikai.shop.domain.adress.repository.AddressRepository;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
+import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
+import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
+import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,18 +39,20 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 
-    @Mock
-    MemberRepository memberRepository;
-    @Mock
-    OrdersRepository ordersRepository;
-
+    @Mock MemberRepository memberRepository;
+    @Mock OrdersRepository ordersRepository;
+    @Mock AddressRepository addressRepository;
+    @Mock ProductRepository productRepository;
+    @Mock OrderItemRepository orderItemRepository;
     @InjectMocks OrdersServiceImpl orderService;
 
     OrdersRequestDto ordersRequest;
 
     Orders orders;
-
+    Address address;
     Member member;
+    Product product;
+    OrderItem orderItem;
 
     private void setMemberId(Member member, Long id) throws Exception {
         Field field = member.getClass().getDeclaredField("id");
@@ -64,21 +72,25 @@ class OrderServiceImplTest {
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member, 1L);
 
+        address = Address.builder().member(Member.builder().memberUuid(member.getMemberUuid()).build()).build();
+
+        product = Product.builder().ownerUuid(UUID.randomUUID().toString()).price(new BigDecimal(1000)).build();
+        orderItem = OrderItem.builder().product(product).ownerUuid(member.getMemberUuid()).build();
+
         orders = new Orders(
                 member,
                 new BigDecimal(10),
-                Status.COMPLETED,
+                Status.PENDING,
                 "PayPay",
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                address,
+                product.getOwnerUuid()
         );
         setOrdersId(orders, 1L);
 
         ordersRequest = new OrdersRequestDto(
-                orders.getMember().getId(),
-                orders.getStatus(),
                 orders.getPaymentMethod()
         );
-
     }
 
     @Test
@@ -86,11 +98,14 @@ class OrderServiceImplTest {
     void TestCreateOrder() {
         //given
 
-        when(memberRepository.findById(1L)).thenReturn(Optional.ofNullable(member));
+        when(memberRepository.findByMemberUuid(orders.getMember().getMemberUuid())).thenReturn(Optional.ofNullable(member));
+        when(addressRepository.findByMemberMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(address));
+        when(orderItemRepository.findByOrders(orders)).thenReturn(List.of(orderItem));
+        when(productRepository.findById(orderItem.getProduct().getId())).thenReturn(Optional.ofNullable(product));
         when(ordersRepository.save(any(Orders.class))).thenReturn(orders);
 
         //when
-        OrdersResponseDto result = orderService.createOrder(member.getId(),ordersRequest);
+        OrdersResponseDto result = orderService.createOrder(member.getMemberUuid(),ordersRequest);
 
 
         //then
@@ -166,7 +181,7 @@ class OrderServiceImplTest {
         when(ordersRepository.findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid())).thenReturn(Optional.ofNullable(orders));
 
         //when
-        OrdersResponseDto result = orderService.updateOrder(member.getMemberUuid(),orders.getOrderUuid(),updateOrder);
+        OrdersResponseDto result = orderService.cancelOrder(member.getMemberUuid(),orders.getOrderUuid());
 
         //then
         assertNotNull(result);

@@ -2,37 +2,29 @@ package com.zinikai.shop.domain.payment.service;
 
 import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
-import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
+import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
-import com.zinikai.shop.domain.payment.dto.PaymentRequestDto;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
-import com.zinikai.shop.domain.payment.entity.QPayment;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
-import com.zinikai.shop.domain.product.dto.ProductResponseDto;
-import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.entity.Product;
-import com.zinikai.shop.domain.product.service.ProductService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static com.zinikai.shop.domain.payment.entity.QPayment.payment;
 
 @Slf4j
 @Transactional(readOnly = true)
@@ -40,67 +32,93 @@ import static com.zinikai.shop.domain.payment.entity.QPayment.payment;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final MemberRepository memberRepository;
     private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
     private final OrderItemRepository orderItemRepository;
     private final MailService mailService;
 
+    @Override @Transactional
+    public PaymentResponseDto confirmPayment(String ownerUuid, String paymentUuid) {
 
-    @Override
-    @Transactional
-    public PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto) {
+        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
 
-        log.info("Creating payment for member ID:{}", memberId);
+        Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
+                .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + memberId));
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new IllegalArgumentException("Payment is already confirmed");
+        }
 
-        Orders order = ordersRepository.findById(requestDto.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + requestDto.getOrderId()));
+        if (order.getStatus() != Status.PENDING) {
+            throw new IllegalArgumentException("Order is already confirmed");
+        }
 
-        Payment payment = Payment.builder()
-                .orders(order)
-                .status(PaymentStatus.COMPLETED)
-                .paymentMethod(order.getPaymentMethod())
-                .ownerUuid(member.getMemberUuid())
-                .build();
+        BigDecimal totalAmount = order.getTotalAmount();
+        Member member = order.getMember();
+        if (member.getBalance().compareTo(totalAmount) < 0){
+            throw new IllegalArgumentException("Insufficient balance");
+        }
 
-        log.info("Created payment:{}", payment);
-
+            payment.paymentStatus(PaymentStatus.COMPLETED);
+            order.ordersStatus(Status.COMPLETED);
 
         List<OrderItem> orderItems = orderItemRepository.findByOrders(order);
         for (OrderItem orderItem : orderItems) {
             Product product = orderItem.getProduct();
-
-
             if (product.getStock() < orderItem.getQuantity()) {
                 throw new IllegalArgumentException("Stock shortage! product name: " + product.getName());
             }
+        }
 
+        for (OrderItem orderItem : orderItems) {
+            Product product = orderItem.getProduct();
             product.decreaseStock(orderItem.getQuantity());
-
-            BigDecimal totalPrice = (product.getPrice()).multiply(new BigDecimal(orderItem.getQuantity()));
-            // 手数料５％
-            BigDecimal sellerEarnings = totalPrice.multiply(new BigDecimal("0.95"));
-            member.increaseBalance((sellerEarnings));
-
         }
 
-        if (PaymentStatus.COMPLETED.equals(payment.getStatus())) {
-            mailService.sendPaymentCompletedEmail(
-                    order.getMember().getEmail(),
-                    order.getMember().getName(),
-                    order.getOrderUuid(),
-                    order.getTotalAmount(),
-                    order.getPaymentMethod());
-        } else {
-            throw new IllegalArgumentException("Check completed");
+        BigDecimal totalPrice = order.getTotalAmount();
+
+        order.getMember().decreaseBalance(totalPrice);
+        order.getMember().increaseHoldBalance(totalPrice);
+
+        mailService.sendPaymentCompletedEmail(
+                order.getMember().getEmail(),
+                order.getMember().getName(),
+                order.getOrderUuid(),
+                order.getTotalAmount(),
+                order.getPaymentMethod());
+
+        return payment.toResponse();
+    }
+
+    @Override @Transactional
+    public PaymentResponseDto cancelPayment(String ownerUuid, String paymentUuid) {
+
+        log.info("Canceling payment: ownerUuid={}, paymentUuid={}", ownerUuid, paymentUuid);
+
+        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
+
+        Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
+                .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new IllegalArgumentException("Payment is already confirmed");
         }
 
-        return paymentRepository.save(payment).toResponse();
+        if (order.getStatus() != Status.PENDING) {
+            throw new IllegalArgumentException("Order is already confirmed");
+        }
+
+        payment.paymentStatus(PaymentStatus.FAILED);
+        order.ordersStatus(Status.CANCELLED);
+
+        log.info("Payment and order canceled: paymentUuid={}, orderUuid={}", paymentUuid, order.getOrderUuid());
+
+        return payment.toResponse();
 
     }
+
 
     @Override
     public Page<PaymentResponseDto> getPayments(String ownerUuid, Pageable pageable) {
@@ -124,7 +142,6 @@ public class PaymentServiceImpl implements PaymentService {
         return payment.toResponse();
     }
 
-
     @Override
     @Transactional
     public PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid, PaymentUpdateDto updateDto) {
@@ -134,11 +151,13 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
 
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new IllegalArgumentException("Payment is already confirmed");
+        }
+
         matchOwnerUuid(ownerUuid, payment);
 
         payment.updateInfo(updateDto.getStatus(), updateDto.getPaymentMethod());
-
-        log.info("updated payment:{}", payment);
 
         Orders orders = payment.getOrders();
         if (orders == null) {
@@ -158,7 +177,13 @@ public class PaymentServiceImpl implements PaymentService {
             } else {
                 throw new IllegalStateException("No Refund has been made");
             }
+
+            if (updateDto.getStatus() == PaymentStatus.COMPLETED) {
+                orders.ordersStatus(Status.COMPLETED);
+            }
         }
+
+        log.info("updated payment:{}", payment);
 
         return payment.toResponse();
     }
@@ -175,6 +200,25 @@ public class PaymentServiceImpl implements PaymentService {
         matchOwnerUuid(ownerUuid, payment);
 
         paymentRepository.delete(payment);
+    }
+
+    @Scheduled(cron = "0 0 * * * ?")
+    @Override
+    @Transactional
+    public void autoCancelPendingPayments() {
+        log.info("Running scheduled task: Auto-failed expired pending payments");
+
+        LocalDateTime expirationTime = LocalDateTime.now().minusMonths(30);
+
+        List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedAtBefore(PaymentStatus.PENDING, expirationTime);
+
+        expiredPayments.forEach(payment -> {
+            payment.paymentStatus(PaymentStatus.FAILED);
+            log.info("Auto-cancelled payment UUID: {}", payment.getPaymentUuid());
+        });
+
+        log.info("Completed scheduled task: Auto-failed expired payments");
+
     }
 
     private static void matchOwnerUuid(String ownerUuid, Payment payment) {

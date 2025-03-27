@@ -1,21 +1,20 @@
 package com.zinikai.shop.domain.order.service;
 
+import com.zinikai.shop.domain.adress.entity.Address;
+import com.zinikai.shop.domain.adress.repository.AddressRepository;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
-import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
-import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
-import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
+import com.zinikai.shop.domain.payment.entity.Payment;
+import com.zinikai.shop.domain.payment.entity.PaymentStatus;
+import com.zinikai.shop.domain.payment.repository.PaymentRepository;
 import com.zinikai.shop.domain.product.entity.Product;
-import com.zinikai.shop.domain.product.entity.ProductImage;
-import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,8 +26,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-import static com.zinikai.shop.domain.order.entity.QOrders.orders;
 
 @Slf4j
 @Service
@@ -38,32 +37,53 @@ public class OrdersServiceImpl implements OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final MemberRepository memberRepository;
+    private final PaymentRepository paymentRepository;
     private final OrderItemService orderItemService;
     private final ProductRepository productRepository;
+    private final AddressRepository addressRepository;
 
     @Override
     @Transactional
-    public OrdersResponseDto createOrder(Long memberId, OrdersRequestDto requestDto) {
+    public OrdersResponseDto createOrder(String memberUuid, OrdersRequestDto requestDto) {
 
-        log.info("Creating order for member ID:{}", memberId);
+        log.info("Creating order for member ID:{}", memberUuid);
 
-        Member member = memberRepository.findById(requestDto.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("Not found member ID"));
+        Member member = memberRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
 
-        if (!Objects.equals(member.getId(), memberId)) {
-            throw new IllegalArgumentException("MemberShip IDs do not match");
-        }
-
+        Address address = addressRepository.findByMemberMemberUuid(memberUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
 
         BigDecimal totalAmount = calculateTotalAmount(requestDto.getOrderItems());
 
         validateAmountAndPaymentMethod(totalAmount, requestDto.getPaymentMethod());
+
+
+        //  一回のオーダーは一人の販売者が売ってる商品を購入が可能です。
+        List<String> productIds = requestDto.getOrderItems().stream()
+                .map(OrderItemRequestDto::getProductUuid)
+                .collect(Collectors.toList());
+
+        List<Product> products = productRepository.findAllByProductUuidIn(productIds);
+        if (products.isEmpty()) {
+            throw new IllegalArgumentException("No valid products found for the given IDs");
+        }
+
+        String sellerUuid = products.get(0).getOwnerUuid();
+
+        for (Product product : products) {
+            if (!product.getOwnerUuid().equals(sellerUuid)) {
+                throw new IllegalArgumentException("All items in the order must be from the same seller.");
+            }
+        }
 
         Orders orders = Orders.builder()
                 .member(member)
                 .totalAmount(totalAmount)
                 .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
+                .sellerUuid(sellerUuid)
+                .address(address)
                 .build();
 
         Orders savedOrders = ordersRepository.save(orders);
@@ -71,19 +91,31 @@ public class OrdersServiceImpl implements OrdersService {
         log.info("Created order: ID={}, MemberID={}, Amount={}",
                 savedOrders.getId(), savedOrders.getMember().getId(), savedOrders.getTotalAmount());
 
-        for (OrderItemRequestDto itemDto : requestDto.getOrderItems() ) {
-            orderItemService.createAndSaveOrderItem(member ,itemDto,savedOrders);
+        for (OrderItemRequestDto itemDto : requestDto.getOrderItems()) {
+            orderItemService.createAndSaveOrderItem(member, itemDto, savedOrders);
         }
-        return savedOrders.toResponseDto();
 
+        Payment payment = Payment.builder()
+                .orders(orders)
+                .status(PaymentStatus.PENDING)
+                .paymentMethod(orders.getPaymentMethod())
+                .ownerUuid(member.getMemberUuid())
+                .build();
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        log.info("Created payment:{}", savedPayment);
+
+        return savedOrders.toResponseDto();
     }
+
 
     @Override
     public OrdersResponseDto getOrder(String memberUuid, String ordersUuid) {
         Orders order = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, ordersUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID"));
 
-        matchMemberUuid(memberUuid,order);
+        matchMemberUuid(memberUuid, order);
 
         return order.toResponseDto();
     }
@@ -98,21 +130,20 @@ public class OrdersServiceImpl implements OrdersService {
 
     @Override
     @Transactional
-    public OrdersResponseDto updateOrder(String memberUuid, String orderUuid, OrdersUpdateDto updateDto) {
+    public OrdersResponseDto cancelOrder(String memberUuid, String orderUuid) {
 
         log.info("Updating order for member UUID:{}, order UUID:{}", memberUuid, orderUuid);
 
         Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
 
-
         matchMemberUuid(memberUuid, orders);
 
-        validateAmountAndPaymentMethod(updateDto.getTotalAmount(), updateDto.getPaymentMethod());
+        if (orders.getStatus() != Status.PENDING){
+            throw new IllegalArgumentException("Order is already confirmed");
+        }
 
-        orders.UpdateInfo(updateDto.getTotalAmount(),
-                updateDto.getStatus(),
-                updateDto.getPaymentMethod());
+        orders.ordersStatus(Status.CANCELLED);
 
         log.info("Updated order:{}", orders);
 
@@ -135,7 +166,7 @@ public class OrdersServiceImpl implements OrdersService {
 
     private void matchMemberUuid(String memberUuid, Orders orders) {
         if (!Objects.equals(orders.getMember().getMemberUuid(), memberUuid)) {
-            throw new IllegalArgumentException("Member UUId dose not match the order owner");
+            throw new IllegalArgumentException("Member UUID dose not match the order owner");
         }
     }
 
@@ -149,12 +180,12 @@ public class OrdersServiceImpl implements OrdersService {
         }
     }
 
-    public BigDecimal calculateTotalAmount(List<OrderItemRequestDto> orderItems){
-    BigDecimal totalAmount = BigDecimal.ZERO;
+    public BigDecimal calculateTotalAmount(List<OrderItemRequestDto> orderItems) {
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (OrderItemRequestDto item : orderItems) {
 
-            Product product = productRepository.findById(item.getProductId())
+            Product product = productRepository.findByProductUuid(item.getProductUuid())
                     .orElseThrow(() -> new IllegalArgumentException("Not found product ID"));
 
             BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(item.getQuantity()));

@@ -7,18 +7,14 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zinikai.shop.domain.member.entity.QMember;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.QOrdersResponseDto;
-import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.QOrders;
 import com.zinikai.shop.domain.order.entity.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.config.annotation.SecurityBuilder;
-import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -48,7 +44,8 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
                         QMember.member.id,
                         QOrders.orders.totalAmount,
                         QOrders.orders.status,
-                        QOrders.orders.paymentMethod
+                        QOrders.orders.paymentMethod,
+                        QOrders.orders.sellerUuid
                 ))
                 .from(QOrders.orders)
                 .leftJoin(QOrders.orders.member, QMember.member)  // 購入の情報を照会をするために、left joinを使いました。
@@ -125,6 +122,4 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
     private OrderSpecifier<?> getSortOrder(String sortField) {
         return SORT_FIELDS.getOrDefault(sortField.toLowerCase(), orders.createdAt.desc());
     }
-
-
 }

@@ -18,15 +18,17 @@ public class OrdersResponseDto {
     private BigDecimal totalAmount;
     private Status status;
     private String paymentMethod;
+    private String sellerUuid;
 
     @Builder @QueryProjection
-    public OrdersResponseDto(Long id, Long memberId, BigDecimal totalAmount, Status status, String paymentMethod) {
+    public OrdersResponseDto(Long id, Long memberId, BigDecimal totalAmount, Status status, String paymentMethod,String sellerUuid) {
         this.id = id;
         this.memberId = memberId;
         this.totalAmount = totalAmount;
         this.status = status;
         this.paymentMethod = paymentMethod;
-    }
+        this.sellerUuid = sellerUuid;
 
+    }
 
 }

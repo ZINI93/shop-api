@@ -12,12 +12,12 @@ import java.time.LocalDateTime;
 
 public interface OrdersService {
 
-    OrdersResponseDto createOrder(Long memberId, OrdersRequestDto requestDto);
+    OrdersResponseDto createOrder(String memberUuid, OrdersRequestDto requestDto);
 
     OrdersResponseDto getOrder(String memberUuid,String ordersUuid);
     Page<OrdersResponseDto> searchOrder(String memberUuid, Status status, LocalDateTime starDate, LocalDateTime endDate, BigDecimal minAmount, BigDecimal maxAmount, String sortField, Pageable pageable);
 
-    OrdersResponseDto updateOrder(String memberUuid, String orderUuid, OrdersUpdateDto updateDto);
+    OrdersResponseDto cancelOrder(String memberUuid, String orderUuid);
 
     void deleteOrder(String memberUuid, String orderUuid);
 }

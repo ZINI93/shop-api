@@ -56,6 +56,9 @@ public class Payment extends TimeStamp {
     public void updateInfo(PaymentStatus status, String paymentMethod){
         this.status = status;
         this.paymentMethod = paymentMethod;
+    }
 
+    public void paymentStatus(PaymentStatus status) {
+        this.status = status;
     }
 }

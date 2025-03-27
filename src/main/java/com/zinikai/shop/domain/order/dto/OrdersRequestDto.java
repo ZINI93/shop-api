@@ -20,25 +20,15 @@ import java.util.List;
 @Data
 public class OrdersRequestDto {
 
-    private Long memberId;
-
-//    @NotNull
-//    @Min(value = 1 , message = "総量は１ー１０００で入力してください。")
-//    @Max(value = 10000 , message = "総量は１ー１０００で入力してください。")
-//    private BigDecimal totalAmount;
-
-//    @NotBlank(message = "注文のステータスが必要です。")
-    private Status status;
-
     @NotBlank(message = "お支払いの方法が必要です。")
     private String paymentMethod;
 
     private List<OrderItemRequestDto> orderItems;
 
+
     @Builder
-    public OrdersRequestDto(Long memberId, Status status, String paymentMethod) {
-        this.memberId = memberId;
-        this.status = status;
+    public OrdersRequestDto(String paymentMethod) {
+//        this.status = status;
         this.paymentMethod = paymentMethod;
     }
 }

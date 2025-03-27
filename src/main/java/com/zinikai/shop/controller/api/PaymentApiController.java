@@ -23,20 +23,6 @@ public class PaymentApiController {
 
     private final PaymentService paymentService;
 
-
-    @PostMapping
-    public ResponseEntity<PaymentResponseDto> createPayment(@Valid @RequestBody PaymentRequestDto requestDto,
-                                                            Authentication authentication){
-
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        Long memberId = customUserDetails.getMemberId();
-
-        PaymentResponseDto savedPayment = paymentService.createPayment(memberId,requestDto);
-
-        URI location = URI.create("/api/payments/" + savedPayment.getId());
-        return ResponseEntity.created(location).body(savedPayment);
-    }
-
     @GetMapping
     public ResponseEntity<Page<PaymentResponseDto>> getPayments(Authentication authentication,
                                                                 @PageableDefault(size = 10,page = 0)Pageable pageable) {
@@ -59,8 +45,6 @@ public class PaymentApiController {
         return ResponseEntity.ok(payment);
     }
 
-
-
     @PutMapping("{paymentUuId}")
     public ResponseEntity<PaymentResponseDto> editPayment(@PathVariable String paymentUuId,
                                                           Authentication authentication,
@@ -68,8 +52,31 @@ public class PaymentApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        PaymentResponseDto paymentResponseDto = paymentService.updatePayment(memberUuid, paymentUuId, updateDto);
-        return ResponseEntity.ok(paymentResponseDto);
+        PaymentResponseDto payment = paymentService.updatePayment(memberUuid, paymentUuId, updateDto);
+        return ResponseEntity.ok(payment);
+    }
+    @PutMapping("{paymentUuId}/completed")
+    public ResponseEntity<PaymentResponseDto> confirmPayment(@PathVariable String paymentUuId,
+                                                          Authentication authentication) {
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        PaymentResponseDto payment = paymentService.confirmPayment(memberUuid, paymentUuId);
+
+        return ResponseEntity.ok(payment);
+    }
+
+    @PutMapping("{paymentUuId}/cancel")
+    public ResponseEntity<PaymentResponseDto> cancelPayment(@PathVariable String paymentUuId,
+                                                          Authentication authentication) {
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        PaymentResponseDto payment = paymentService.cancelPayment(memberUuid, paymentUuId);
+
+        return ResponseEntity.ok(payment);
     }
 
     @DeleteMapping("{paymentUuid}")
