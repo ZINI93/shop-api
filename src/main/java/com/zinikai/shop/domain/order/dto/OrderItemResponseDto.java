@@ -13,14 +13,16 @@ public class OrderItemResponseDto {
     private Long productId;
     private Integer quantity;
     private BigDecimal price;
+    private String sellerUuid;
 
 
     @Builder
-    public OrderItemResponseDto(Long orderItemId, Long orderId, Long productId, Integer quantity, BigDecimal price) {
+    public OrderItemResponseDto(Long orderItemId, Long orderId, Long productId, Integer quantity, BigDecimal price,String sellerUuid) {
         this.orderItemId = orderItemId;
         OrderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;
+        this.sellerUuid = sellerUuid;
     }
 }

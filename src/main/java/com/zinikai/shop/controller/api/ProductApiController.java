@@ -28,7 +28,6 @@ public class ProductApiController {
     private final ProductService productService;
 
 
-    //商品登録　ー　POSTMEN TEST 完了
     @PostMapping
     public ResponseEntity<ProductResponseDto> createProduct(@Valid @RequestBody ProductRequestDto requestDto,
                                                             Authentication authentication) {
@@ -44,10 +43,6 @@ public class ProductApiController {
 
         return ResponseEntity.created(location).body(product);
     }
-
-    /**
-     * 商品サーチ
-     */
 
     @GetMapping
     public ResponseEntity<Page<ProductResponseDto>> searchProducts(

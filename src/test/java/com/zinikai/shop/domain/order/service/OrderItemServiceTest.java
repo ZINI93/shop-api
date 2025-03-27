@@ -10,8 +10,7 @@ import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
-import org.hibernate.sql.ast.tree.expression.Any;
-import org.hibernate.sql.ast.tree.expression.CaseSimpleExpression;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -78,14 +76,14 @@ class OrderItemServiceTest {
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member,1L);
 
-        orders = Orders.builder().build();
+        orders = Orders.builder().orderUuid(UUID.randomUUID().toString()).build();
         setOrderId(orders,1L);
 
         product = Product.builder().build();
         setProductId(product,1L);
 
 
-        orderItemRequestDto = new OrderItemRequestDto(1L, 100);
+        orderItemRequestDto = new OrderItemRequestDto(1L, 100, orders.getOrderUuid());
 
         orderItem = new OrderItem(
                 orders,
@@ -93,7 +91,8 @@ class OrderItemServiceTest {
                 orderItemRequestDto.getQuantity(),
                 new BigDecimal("2000.00"),
                 member.getMemberUuid(),
-                UUID.randomUUID().toString());
+                UUID.randomUUID().toString(),
+                product.getOwnerUuid());
 
 
     }

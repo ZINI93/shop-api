@@ -80,7 +80,6 @@ class AddressServiceImplTest {
         //then
         assertNotNull(result);
         assertEquals(requestDto.getZipcode(), result.getZipcode());
-        assertEquals(member.getId(), result.getId());
 
         verify(addressRepository, times(1)).save(any(Address.class));
     }

@@ -34,7 +34,7 @@ public class OrderItemServiceImpl implements OrderItemService {
 
         log.info("Creating orderItem for member email:{}", member.getEmail());
 
-        Product product = productRepository.findById(itemDto.getProductId())
+        Product product = productRepository.findByProductUuid(itemDto.getProductUuid())
                 .orElseThrow(() -> new IllegalArgumentException("Not found product id"));
 
         OrderItem orderItem = OrderItem.builder()

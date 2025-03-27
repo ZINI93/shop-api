@@ -40,6 +40,9 @@ public class OrderItem extends TimeStamp {
     @Column(name = "owner_uuid", nullable = false, updatable = false)
     private String ownerUuid;
 
+    @Column(name = "seller_uuid", nullable = false, updatable = false)
+    private String sellerUuid;
+
     @Column(name = "order_item_uuid", nullable = false, updatable = false, unique = true)
     private String orderItemUuid;
 
@@ -49,22 +52,24 @@ public class OrderItem extends TimeStamp {
     }
 
     @Builder
-    public OrderItem(Orders orders, Product product, Integer quantity, BigDecimal price, String ownerUuid, String orderItemUud) {
+    public OrderItem(Orders orders, Product product, Integer quantity, BigDecimal price, String ownerUuid, String orderItemUuid, String sellerUuid) {
         this.orders = orders;
         this.product = product;
         this.quantity = quantity;
-        this.price = price;
+        this.price = (price != null) ? price : product.getPrice();
         this.ownerUuid = ownerUuid;
         this.orderItemUuid = UUID.randomUUID().toString();
+        this.sellerUuid = product.getOwnerUuid();
     }
 
     public OrderItemResponseDto toResponseDto() {
 
         return OrderItemResponseDto.builder()
                 .orderId(this.getOrders().getId())
-                .productId(this.getOrders().getId())
+                .productId(this.getProduct().getId())
                 .quantity(this.getQuantity())
                 .price(this.getPrice())
+                .sellerUuid(this.sellerUuid)
                 .build();
     }
 }

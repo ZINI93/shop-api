@@ -15,23 +15,11 @@ import java.time.LocalDateTime;
 @Data
 public class OrdersUpdateDto {
 
-
-    @NotNull
-    @Min(value = 1 , message = "総量は１ー１０００で入力してください。")
-    @Max(value = 10000 , message = "総量は１ー１０００で入力してください。")
-    private BigDecimal totalAmount;
-
     @NotBlank(message = "注文のステータスが必要です。")
     private Status status;
 
-    @NotBlank(message = "お支払いの方法が必要です。")
-    private String paymentMethod;
-
-
     @Builder
     public OrdersUpdateDto(BigDecimal totalAmount, Status status, String paymentMethod) {
-        this.totalAmount = totalAmount;
         this.status = status;
-        this.paymentMethod = paymentMethod;
     }
 }

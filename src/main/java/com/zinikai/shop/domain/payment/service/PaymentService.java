@@ -12,9 +12,12 @@ import java.util.List;
 
 public interface PaymentService {
 
-    PaymentResponseDto createPayment(Long memberId, PaymentRequestDto requestDto);
+    PaymentResponseDto confirmPayment(String ownerUuid, String paymentUuid);
+    PaymentResponseDto cancelPayment(String ownerUuid, String paymentUuid);
+
     Page<PaymentResponseDto> getPayments(String ownerUuid, Pageable pageable);
     PaymentResponseDto getPayment(String ownerUuid, String paymentUuid);
     PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid , PaymentUpdateDto updateDto);
     void deletePayment(String ownerUuid, String paymentUuid);
+    void autoCancelPendingPayments();
 }
