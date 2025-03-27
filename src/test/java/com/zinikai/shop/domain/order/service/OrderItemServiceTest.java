@@ -83,7 +83,7 @@ class OrderItemServiceTest {
         setProductId(product,1L);
 
 
-        orderItemRequestDto = new OrderItemRequestDto(1L, 100, orders.getOrderUuid());
+        orderItemRequestDto = new OrderItemRequestDto(UUID.randomUUID().toString(), 100);
 
         orderItem = new OrderItem(
                 orders,

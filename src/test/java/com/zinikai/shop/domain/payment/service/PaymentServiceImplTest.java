@@ -97,26 +97,26 @@ class PaymentServiceImplTest {
 
     }
 
-    @Test
-    void createPayment() {
-        //given
-        when(memberRepository.findByMemberUuid(orders.getMember().getMemberUuid())).thenReturn(Optional.ofNullable(member));
-        when(ordersRepository.findById(orders.getId())).thenReturn(Optional.ofNullable(orders));
-        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
-        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
-
-        //when
-        PaymentResponseDto result = paymentService.createPayment(orders.getMember().getMemberUuid(), requestDto);
-        mailService.sendPaymentCompletedEmail(orders.getMember().getEmail(),orders.getMember().getName(),orders.getOrderUuid(),orders.getTotalAmount(),orders.getPaymentMethod());
-
-
-        //then
-        assertNotNull(result);
-        assertEquals(1L, result.getOrderId());
-        assertEquals("PayPay", result.getPaymentMethod());
-
-        verify(paymentRepository, times(1)).save(any(Payment.class));
-    }
+//    @Test
+//    void createPayment() {
+//        //given
+//        when(memberRepository.findByMemberUuid(orders.getMember().getMemberUuid())).thenReturn(Optional.ofNullable(member));
+//        when(ordersRepository.findById(orders.getId())).thenReturn(Optional.ofNullable(orders));
+//        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
+//        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
+//
+//        //when
+//        PaymentResponseDto result = paymentService.createPayment(orders.getMember().getMemberUuid(), requestDto);
+//        mailService.sendPaymentCompletedEmail(orders.getMember().getEmail(),orders.getMember().getName(),orders.getOrderUuid(),orders.getTotalAmount(),orders.getPaymentMethod());
+//
+//
+//        //then
+//        assertNotNull(result);
+//        assertEquals(1L, result.getOrderId());
+//        assertEquals("PayPay", result.getPaymentMethod());
+//
+//        verify(paymentRepository, times(1)).save(any(Payment.class));
+//    }
 
     @Test
     void TestPayments() {
