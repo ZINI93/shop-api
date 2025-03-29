@@ -23,10 +23,9 @@ public class AddressApiController {
     public ResponseEntity<AddressResponseDto> createAddress(@RequestBody AddressRequestDto requestDto,
                                                             Authentication authentication) {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        Long memberId = customUserDetails.getMemberId();
+        String memberUuid = getMemberUuid(authentication);
 
-        AddressResponseDto address = addressService.createAddress(memberId, requestDto);
+        AddressResponseDto address = addressService.createAddress(memberUuid, requestDto);
         URI location = URI.create("/api/address" + address.getId());
         return ResponseEntity.created(location).body(address);
     }

@@ -7,7 +7,7 @@ import com.zinikai.shop.domain.cart.dto.CartRequestDto;
 
 public interface AddressService {
 
-    AddressResponseDto createAddress(Long memberId, AddressRequestDto requestDto);
+    AddressResponseDto createAddress(String memberUuid, AddressRequestDto requestDto);
 
     AddressResponseDto getAddress(String memberUuid, String addressUuid);
 

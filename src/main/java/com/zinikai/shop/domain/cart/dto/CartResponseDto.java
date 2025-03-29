@@ -10,16 +10,10 @@ import lombok.Data;
 @Builder
 public class CartResponseDto {
 
-    private Long id;
-    private Long memberId ;
-    private Long productId;
     private Integer quantity;
 
     @Builder
-    public CartResponseDto(Long id, Long memberId, Long productId, Integer quantity) {
-        this.id = id;
-        this.memberId = memberId;
-        this.productId = productId;
+    public CartResponseDto(Integer quantity) {
         this.quantity = quantity;
     }
 }

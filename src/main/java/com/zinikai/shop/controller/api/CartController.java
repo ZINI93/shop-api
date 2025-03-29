@@ -30,10 +30,10 @@ public class CartController {
     public ResponseEntity<CartResponseDto> createCart(@RequestBody CartRequestDto requestDto,
                                                       Authentication authentication) {
         CustomUserDetails customUserDetails = getPrincipal(authentication);
-        Long memberId = customUserDetails.getMemberId();
+        String memberUuid = customUserDetails.getMemberUuid();
 
-        CartResponseDto cart = cartService.createCart(memberId, requestDto);
-        URI location = URI.create("/api/cart/" + cart.getId());
+        CartResponseDto cart = cartService.createCart(memberUuid, requestDto);
+        URI location = URI.create("/api/cart/" + memberUuid);
         return ResponseEntity.created(location).body(cart);
     }
 

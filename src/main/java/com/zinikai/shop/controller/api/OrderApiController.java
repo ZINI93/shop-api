@@ -34,7 +34,18 @@ public class OrderApiController {
         String memberUuid = getMemberUuid(authentication);
 
         OrdersResponseDto order = orderService.createOrder(memberUuid, requestDto);
-        URI location = URI.create("/api/orders" + order.getId());
+        URI location = URI.create("/api/orders" + memberUuid);
+        return ResponseEntity.created(location).body(order);
+
+    }
+    @PostMapping("/carts")
+    public ResponseEntity<OrdersResponseDto> createOrderFromCart(@Valid @RequestBody OrdersRequestDto requestDto,
+                                                         Authentication authentication) {
+
+        String memberUuid = getMemberUuid(authentication);
+
+        OrdersResponseDto order = orderService.createOrderFromCart(memberUuid, requestDto);
+        URI location = URI.create("/api/orders/carts" + memberUuid);
         return ResponseEntity.created(location).body(order);
 
     }

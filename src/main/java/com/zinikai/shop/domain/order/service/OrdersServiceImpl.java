@@ -2,6 +2,8 @@ package com.zinikai.shop.domain.order.service;
 
 import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.adress.repository.AddressRepository;
+import com.zinikai.shop.domain.cart.entity.Cart;
+import com.zinikai.shop.domain.cart.repository.CartRepository;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class OrdersServiceImpl implements OrdersService {
     private final OrderItemService orderItemService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
+    private final CartRepository cartRepository;
 
     @Override
     @Transactional
@@ -57,7 +61,6 @@ public class OrdersServiceImpl implements OrdersService {
         BigDecimal totalAmount = calculateTotalAmount(requestDto.getOrderItems());
 
         validateAmountAndPaymentMethod(totalAmount, requestDto.getPaymentMethod());
-
 
         //  一回のオーダーは一人の販売者が売ってる商品を購入が可能です。
         List<String> productIds = requestDto.getOrderItems().stream()
@@ -109,6 +112,68 @@ public class OrdersServiceImpl implements OrdersService {
         return savedOrders.toResponseDto();
     }
 
+    @Override
+    @Transactional
+    public OrdersResponseDto createOrderFromCart(String memberUuid, OrdersRequestDto requestDto) {
+        log.info("Creating order for member ID:{}", memberUuid);
+
+        Member member = memberRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+
+        Address address = addressRepository.findByMemberMemberUuid(memberUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+
+        List<Cart> carts = cartRepository.findAllByMemberMemberUuid(memberUuid);
+
+        List<String> cartUuids = carts.stream()
+                .map(Cart::getCartUuid)
+                .collect(Collectors.toList());
+
+        List<Cart> selectedCarts = cartRepository.findAllByMemberUuidAndCartUuids(memberUuid, cartUuids);
+        if (selectedCarts.isEmpty()) {
+            throw new IllegalArgumentException("No valid cart item selected for order");
+        }
+
+        String sellerUuid = selectedCarts.get(0).getProduct().getOwnerUuid();
+        boolean isValidSeller = selectedCarts.stream()
+                .allMatch(cart -> cart.getProduct().getOwnerUuid().equals(sellerUuid));
+
+        if (!isValidSeller) {
+            throw new IllegalArgumentException("All items in the order must be from the same seller.");
+        }
+
+        BigDecimal totalAmount = CartCalculateTotalAmount(selectedCarts);
+
+        Orders orders = Orders.builder()
+                .member(member)
+                .totalAmount(totalAmount)
+                .status(Status.PENDING)
+                .paymentMethod(requestDto.getPaymentMethod())
+                .sellerUuid(sellerUuid)
+                .address(address)
+                .build();
+
+        Orders savedOrders = ordersRepository.save(orders);
+
+        log.info("Created order: ID={}, MemberID={}, Amount={}",
+                savedOrders.getId(), savedOrders.getMember().getId(), savedOrders.getTotalAmount());
+
+        cartRepository.deleteAll(selectedCarts);
+
+        Payment payment = Payment.builder()
+                .orders(orders)
+                .status(PaymentStatus.PENDING)
+                .paymentMethod(orders.getPaymentMethod())
+                .ownerUuid(member.getMemberUuid())
+                .build();
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        log.info("Created payment:{}", savedPayment);
+
+        return savedOrders.toResponseDto();
+    }
+
 
     @Override
     public OrdersResponseDto getOrder(String memberUuid, String ordersUuid) {
@@ -139,7 +204,7 @@ public class OrdersServiceImpl implements OrdersService {
 
         matchMemberUuid(memberUuid, orders);
 
-        if (orders.getStatus() != Status.PENDING){
+        if (orders.getStatus() != Status.PENDING) {
             throw new IllegalArgumentException("Order is already confirmed");
         }
 
@@ -159,9 +224,29 @@ public class OrdersServiceImpl implements OrdersService {
         Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
 
+        if (orders.getStatus() != Status.CANCELLED) {
+            throw new IllegalArgumentException("Can not deleted except fro canceled order");
+        }
+
         matchMemberUuid(memberUuid, orders);
 
         ordersRepository.delete(orders);
+    }
+
+    @Scheduled(cron = "0 0 * * * ?")
+    @Override
+    @Transactional
+    public void AutoPendingOrders() {
+        log.info("Running scheduled task: Auto-failed expired pending orders");
+
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(20);
+
+        int updatedCount = ordersRepository.bulkCancelExpiredOrders(
+                Status.PENDING,
+                Status.CANCELLED,
+                expirationTime
+        );
+        log.info("Cancelled {} expired orders", updatedCount);
     }
 
     private void matchMemberUuid(String memberUuid, Orders orders) {
@@ -193,7 +278,10 @@ public class OrdersServiceImpl implements OrdersService {
         }
         return totalAmount;
     }
+
+    public BigDecimal CartCalculateTotalAmount(List<Cart> cartItems) {
+        return cartItems.stream()
+                .map(cart -> cart.getProduct().getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
-
-
-

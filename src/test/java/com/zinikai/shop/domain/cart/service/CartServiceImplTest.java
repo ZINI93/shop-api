@@ -71,7 +71,7 @@ class CartServiceImplTest {
         cart = new Cart(member , product, 10, UUID.randomUUID().toString());
         setCartId(cart,1L);
 
-        cartRequest = new CartRequestDto(cart.getMember().getId(),cart.getProduct().getId(),cart.getQuantity());
+        cartRequest = new CartRequestDto(cart.getMember().getId(),cart.getQuantity());
     }
 
     @Test
@@ -85,7 +85,7 @@ class CartServiceImplTest {
 
         //when
 
-        CartResponseDto result = cartService.createCart(member.getId(),cartRequest);
+        CartResponseDto result = cartService.createCart(member.getMemberUuid(),cartRequest);
 
         //then
         assertNotNull(result);

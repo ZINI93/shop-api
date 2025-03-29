@@ -9,10 +9,7 @@ import lombok.Data;
 public class CartRequestDto {
 
     @NotNull
-    private Long memberId ;
-
-    @NotNull
-    private Long productId;
+    private String productUuid;
 
     @NotNull
     @Min(value = 1, message = "数量は1から1000まで入力してください。" )
@@ -20,9 +17,8 @@ public class CartRequestDto {
     private final Integer quantity;
 
     @Builder
-    public CartRequestDto(Long memberId, Long productId, Integer quantity) {
-        this.memberId = memberId;
-        this.productId = productId;
+    public CartRequestDto(String productUuid, Integer quantity) {
+        this.productUuid = productUuid;
         this.quantity = quantity;
     }
 }
