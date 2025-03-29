@@ -40,8 +40,6 @@ public class OrdersRepositoryImpl implements OrdersRepositoryCustom {
         //데이터 조회
         List<OrdersResponseDto> orders = queryFactory
                 .select(new QOrdersResponseDto(
-                        QOrders.orders.id,
-                        QMember.member.id,
                         QOrders.orders.totalAmount,
                         QOrders.orders.status,
                         QOrders.orders.paymentMethod,

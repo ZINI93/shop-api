@@ -46,7 +46,6 @@ public class OrderItem extends TimeStamp {
     @Column(name = "order_item_uuid", nullable = false, updatable = false, unique = true)
     private String orderItemUuid;
 
-
     public void setOrders(Orders orders) {
         this.orders = orders;
     }

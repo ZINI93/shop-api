@@ -65,7 +65,6 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     public OrdersResponseDto toResponseDto() {
 
         return OrdersResponseDto.builder()
-                .memberId(this.member.getId())
                 .totalAmount(this.totalAmount)
                 .status(this.status)
                 .paymentMethod(this.paymentMethod)
@@ -79,8 +78,6 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     public void ordersStatus(Status status) {
         this.status = status;
     }
-
-
 
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);

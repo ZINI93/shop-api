@@ -18,7 +18,7 @@ public class Address extends TimeStamp {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "address_id", nullable = false)
+    @Column(name = "address_id", nullable = false, unique = true)
     private Long id;
 
     @Column(nullable = false)
@@ -33,11 +33,11 @@ public class Address extends TimeStamp {
     @Column(nullable = false)
     private String street;
 
-    @Column(name = "address_uuid", nullable = false, updatable = false)
+    @Column(name = "address_uuid", nullable = false, updatable = false, unique = false)
     private String addressUuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", unique = true)
     private Member member;
 
 

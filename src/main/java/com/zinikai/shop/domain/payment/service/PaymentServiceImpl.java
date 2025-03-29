@@ -202,22 +202,21 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.delete(payment);
     }
 
-    @Scheduled(cron = "0 0 * * * ?")
     @Override
+    @Scheduled(cron = "0 0 * * * ?")
     @Transactional
     public void autoCancelPendingPayments() {
         log.info("Running scheduled task: Auto-failed expired pending payments");
 
-        LocalDateTime expirationTime = LocalDateTime.now().minusMonths(30);
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(10);
 
-        List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedAtBefore(PaymentStatus.PENDING, expirationTime);
+        int updateCount = paymentRepository.bulkFailedExpiredPayment(
+                PaymentStatus.PENDING,
+                PaymentStatus.FAILED,
+                expirationTime
+        );
 
-        expiredPayments.forEach(payment -> {
-            payment.paymentStatus(PaymentStatus.FAILED);
-            log.info("Auto-cancelled payment UUID: {}", payment.getPaymentUuid());
-        });
-
-        log.info("Completed scheduled task: Auto-failed expired payments");
+        log.info("Failed {} expired orders", updateCount);
 
     }
 

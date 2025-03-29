@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 import java.util.Optional;
 
-
 @Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -32,41 +31,44 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartResponseDto createCart(Long memberId, CartRequestDto requestDto) {
+    public CartResponseDto createCart(String memberUuid, CartRequestDto requestDto) {
 
-        log.info("Creating cart for member ID :{}", memberId);
+        log.info("Creating cart for member ID :{}", memberUuid);
 
-        if (!memberId.equals(requestDto.getMemberId())) {
-            throw new IllegalArgumentException("Membership IDs do not match: "+ memberId);
-        }
-
-        Member member = memberRepository.findById(requestDto.getMemberId())
+        Member member = memberRepository.findByMemberUuid(memberUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member ID"));
 
-        Product product = productRepository.findById(requestDto.getProductId())
+        Product product = productRepository.findByProductUuid(requestDto.getProductUuid())
                 .orElseThrow(() -> new IllegalArgumentException("Not found Product Id"));
-        
-        Optional<Cart> existingCart = cartRepository.findByMemberMemberUuidAndProductId(member.getMemberUuid(), product.getId());
 
-        int existingCartQuantity = existingCart.map(Cart::getQuantity).orElse(0);
+        Cart cart = cartRepository.findByMemberMemberUuidAndProductId(member.getMemberUuid(), product.getId())
+                .orElse(null);
 
-        validateStockAndQuantity(requestDto.getQuantity(), product,  existingCartQuantity);
+        int currentCartItem = cartRepository.countByMember(member);
 
-        if (existingCart.isPresent()) {
-            Cart cart = existingCart.get();
+        int MAX_CART_ITEM = 20;
+        if (currentCartItem >= MAX_CART_ITEM) {
+            throw new IllegalArgumentException("You can't have more then" + MAX_CART_ITEM + "cartItem");
+        }
+
+        int existingCartQuantity = (cart != null) ? cart.getQuantity() : 0;
+
+        validateStockAndQuantity(requestDto.getQuantity(), product, existingCartQuantity);
+
+        if (cart != null) {
             cart.updateQuantity(cart.getQuantity() + requestDto.getQuantity());
             return cartRepository.save(cart).toResponse();
         }
 
-        Cart cart = Cart.builder()
+        Cart savedCart = Cart.builder()
                 .member(member)
                 .product(product)
                 .quantity(requestDto.getQuantity())
                 .build();
 
-        log.info("Created cart:{}", cart);
+        log.info("Created cart:{}", savedCart);
 
-        return cartRepository.save(cart).toResponse();
+        return cartRepository.save(savedCart).toResponse();
     }
 
     @Override
@@ -120,7 +122,7 @@ public class CartServiceImpl implements CartService {
 
     private void validateStockAndQuantity(int requestedQuantity, Product product, int existingCartQuantity) {
 
-        int totalRequested  = requestedQuantity + existingCartQuantity;
+        int totalRequested = requestedQuantity + existingCartQuantity;
 
         if (product.getStock() == 0 || product.getStock() < totalRequested) {
             throw new IllegalArgumentException("Not enough stock. Available: " + product.getStock() + ", Requested: " + requestedQuantity);

@@ -6,6 +6,7 @@ import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
 import com.zinikai.shop.domain.order.dto.OrderItemResponseDto;
 import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
+import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.product.entity.Product;
@@ -36,11 +37,16 @@ import static org.mockito.Mockito.*;
 class OrderItemServiceTest {
 
 
-    @Mock OrderItemRepository orderItemRepository;
-    @Mock ProductRepository productRepository;
-    @Mock OrdersRepository ordersRepository;
-    @Mock MemberRepository memberRepository;
-    @InjectMocks OrderItemServiceImpl orderItemService;
+    @Mock
+    OrderItemRepository orderItemRepository;
+    @Mock
+    ProductRepository productRepository;
+    @Mock
+    OrdersRepository ordersRepository;
+    @Mock
+    MemberRepository memberRepository;
+    @InjectMocks
+    OrderItemServiceImpl orderItemService;
 
     OrderItem orderItem;
     OrderItemRequestDto orderItemRequestDto;
@@ -50,6 +56,7 @@ class OrderItemServiceTest {
     Orders orders;
 
     Product product;
+
     private void setMemberId(Member member, Long id) throws Exception {
         Field field = member.getClass().getDeclaredField("id");
         field.setAccessible(true);
@@ -69,18 +76,17 @@ class OrderItemServiceTest {
     }
 
 
-
     @BeforeEach
     void setup() throws Exception {
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
-        setMemberId(member,1L);
+        setMemberId(member, 1L);
 
         orders = Orders.builder().orderUuid(UUID.randomUUID().toString()).build();
-        setOrderId(orders,1L);
+        setOrderId(orders, 1L);
 
         product = Product.builder().build();
-        setProductId(product,1L);
+        setProductId(product, 1L);
 
 
         orderItemRequestDto = new OrderItemRequestDto(UUID.randomUUID().toString(), 100);
@@ -98,13 +104,13 @@ class OrderItemServiceTest {
     }
 
     @Test
-    void createOrderItem(){
+    void createOrderItem() {
         //given
         when(productRepository.findById(1L)).thenReturn(Optional.ofNullable(product));
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(orderItem);
 
         //when
-        orderItemService.createAndSaveOrderItem(member,orderItemRequestDto,orders);
+        orderItemService.createAndSaveOrderItem(member, orderItemRequestDto, orders);
 
         //then
         verify(orderItemRepository, times(1)).save(any(OrderItem.class));
@@ -112,7 +118,7 @@ class OrderItemServiceTest {
     }
 
     @Test
-    void getAllOrderItem(){
+    void getAllOrderItem() {
         //given
 
 
@@ -120,7 +126,7 @@ class OrderItemServiceTest {
         List<OrderItem> mockOrderItems = List.of(orderItem);
         Page<OrderItem> mockOrderItem = new PageImpl<>(mockOrderItems, pageable, mockOrderItems.size());
 
-        when(orderItemRepository.findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(),pageable)).thenReturn(mockOrderItem);
+        when(orderItemRepository.findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(), pageable)).thenReturn(mockOrderItem);
 
 
         //when
@@ -128,15 +134,8 @@ class OrderItemServiceTest {
 
         //then
         assertNotNull(result);
-        assertEquals(mockOrderItems.size(),result.getTotalElements());
-        verify(orderItemRepository, times(1)).findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(),pageable);
+        assertEquals(mockOrderItems.size(), result.getTotalElements());
+        verify(orderItemRepository, times(1)).findAllByOwnerUuidOrderByCreatedAtDesc(orderItem.getOwnerUuid(), pageable);
 
     }
-
-
-
-
-
-
-
 }

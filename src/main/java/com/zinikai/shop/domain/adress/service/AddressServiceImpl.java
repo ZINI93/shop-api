@@ -24,15 +24,18 @@ public class AddressServiceImpl implements AddressService {
     private final MemberRepository memberRepository;
 
     @Override @Transactional
-    public AddressResponseDto createAddress(Long memberId, AddressRequestDto requestDto) {
+    public AddressResponseDto createAddress(String memberUuid, AddressRequestDto requestDto) {
 
-        log.info("Creating address for member Id:{}", memberId);
+        log.info("Creating address for member Id:{}", memberUuid);
 
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findByMemberUuid(memberUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found Member ID"));
 
-        if (!Objects.equals(member.getId(), memberId)) {
-            throw new IllegalArgumentException("MemberShip IDs do not match");
+        int currentAddressCount = addressRepository.countByMember(member);
+
+        int MAX_ADDRESS = 1;
+        if (currentAddressCount >= MAX_ADDRESS) {
+            throw new IllegalArgumentException("You can't have more then one address");
         }
 
         Address address = Address.builder()

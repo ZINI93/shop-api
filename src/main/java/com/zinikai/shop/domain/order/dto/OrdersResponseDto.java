@@ -13,17 +13,13 @@ import java.time.LocalDateTime;
 @Data
 public class OrdersResponseDto {
 
-    private Long id;
-    private Long memberId;
     private BigDecimal totalAmount;
     private Status status;
     private String paymentMethod;
     private String sellerUuid;
 
     @Builder @QueryProjection
-    public OrdersResponseDto(Long id, Long memberId, BigDecimal totalAmount, Status status, String paymentMethod,String sellerUuid) {
-        this.id = id;
-        this.memberId = memberId;
+    public OrdersResponseDto(BigDecimal totalAmount, Status status, String paymentMethod,String sellerUuid) {
         this.totalAmount = totalAmount;
         this.status = status;
         this.paymentMethod = paymentMethod;

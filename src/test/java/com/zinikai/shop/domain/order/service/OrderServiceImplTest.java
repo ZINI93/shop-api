@@ -14,6 +14,7 @@ import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -203,5 +205,16 @@ class OrderServiceImplTest {
         verify(ordersRepository, times(1)).findByMemberMemberUuidAndOrderUuid(member.getMemberUuid(),orders.getOrderUuid());
     }
 
+    @Test
+    @Transactional
+    public void testBulkUpdate() {
+        LocalDateTime time = LocalDateTime.now().minusHours(1);
+        int result = ordersRepository.bulkCancelExpiredOrders(
+                Status.PENDING,
+                Status.CANCELLED,
+                time
+        );
+        Assertions.assertThat(result).isGreaterThan(0);
+    }
 
 }

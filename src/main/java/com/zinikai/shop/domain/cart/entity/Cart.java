@@ -46,8 +46,6 @@ public class Cart extends TimeStamp {
 
     public CartResponseDto toResponse() {
         return CartResponseDto.builder()
-                .memberId(this.member.getId())
-                .productId(this.product.getId())
                 .quantity(this.quantity)
                 .build();
     }
@@ -55,4 +53,5 @@ public class Cart extends TimeStamp {
     public void updateQuantity(Integer quantity) {
         this.quantity = quantity;
     }
+
 }
