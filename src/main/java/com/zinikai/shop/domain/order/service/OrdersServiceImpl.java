@@ -16,6 +16,7 @@ import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
 import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.entity.ProductStatus;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +76,10 @@ public class OrdersServiceImpl implements OrdersService {
         String sellerUuid = products.get(0).getOwnerUuid();
 
         for (Product product : products) {
+            if (product.getProductStatus() == ProductStatus.SOLD_OUT) {
+                throw new IllegalArgumentException("Item is SOLE_OUT");
+            }
+
             if (!product.getOwnerUuid().equals(sellerUuid)) {
                 throw new IllegalArgumentException("All items in the order must be from the same seller.");
             }

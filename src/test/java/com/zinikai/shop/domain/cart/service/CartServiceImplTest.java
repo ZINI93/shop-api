@@ -71,7 +71,7 @@ class CartServiceImplTest {
         cart = new Cart(member , product, 10, UUID.randomUUID().toString());
         setCartId(cart,1L);
 
-        cartRequest = new CartRequestDto(cart.getMember().getId(),cart.getQuantity());
+        cartRequest = new CartRequestDto(cart.getMember().getMemberUuid(),cart.getQuantity());
     }
 
     @Test
@@ -89,7 +89,6 @@ class CartServiceImplTest {
 
         //then
         assertNotNull(result);
-        assertEquals(1L,result.getMemberId());
         assertEquals(10,result.getQuantity());
         assertNotEquals(-1, result.getQuantity());
         verify(cartRepository,times(1)).save(any(Cart.class));

@@ -61,7 +61,7 @@ public class Member extends TimeStamp {
                 .email(this.email)
                 .name(this.name)
                 .phoneNumber(this.phoneNumber)
-                .role(this.role)
+                .memberUuid(this.getMemberUuid())
                 .build();
     }
 

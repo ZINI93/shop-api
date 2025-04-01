@@ -35,7 +35,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         List<ProductResponseDto> products = queryFactory.
                 select(new QProductResponseDto(
-                        product.id.as("productId"),
                         product.name,
                         product.price,
                         product.description,

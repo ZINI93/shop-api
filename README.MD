@@ -286,7 +286,17 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
   "name": "おしゃれカーテン",
   "price": 2000.00,
   "description": "キラキラカーテン",
-  "stock" : 100
+  "stock" : 50,
+  "productCondition" : "NEW",
+  "productMaker" : "apple",
+  "productImages" : [
+    {
+      "imageUrl": "www.image.com"
+    },
+    {
+      "imageUrl": "www.image1.com"
+    }
+  ]
 }
 ```
 #### **2) 商品リスト**
@@ -318,17 +328,15 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 ---
 ### 3.9. **商品のイメージ機能**
 
-#### **1) 商品登録**
-- **HTTPメソッド:** `POST`
-- **URL:** `/api/product-images`
+#### **1) 商品からイメージリストを検索**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/product-images/{productUuid}`
 
-**リクエスト本文:**
-```json
-{
-  "imageUrl": "https://www.image.com"
-}
-```
-#### **2) 商品イメージリスト**
+#### **2) 商品の情報とイメージを含めて検索**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/product-images/{productUuid}`
+
+#### **3) 商品イメージリスト**
 - **HTTPメソッド:** `GET`
 - **URL:** `/api/product-images`
 

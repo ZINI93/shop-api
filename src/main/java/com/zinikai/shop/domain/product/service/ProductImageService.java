@@ -8,12 +8,14 @@ import java.util.List;
 
 public interface ProductImageService {
 
-    ProductImageResponseDto createProductImage(Long memberId, ProductImageRequestDto requestDto);
+    List<ProductImageResponseDto> getImagesInProduct(String productUuid);
 
     Page<ProductImageResponseDto> getImagesByMember(String ownerUuid, Pageable pageable);
 
-//    ProductImageResponseDto updateProductImage(Long productImageId, ProductImageUpdateDto updateDto);
+    //    ProductImageResponseDto updateProductImage(Long productImageId, ProductImageUpdateDto updateDto);
     ProductImageResponseDto updateProductImage(String ownerUuid, String productImageUuid, ProductImageUpdateDto updateDto);
+
+    ProductWithImagesDto getProductWithImages(String productUuid);
 
     void deleteProductImage(String ownerUuid, String productImageUuid);
 }

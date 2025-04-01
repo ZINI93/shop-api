@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -34,7 +35,11 @@ public class OrderApiController {
         String memberUuid = getMemberUuid(authentication);
 
         OrdersResponseDto order = orderService.createOrder(memberUuid, requestDto);
-        URI location = URI.create("/api/orders" + memberUuid);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{orderUuid}")
+                .buildAndExpand(order.getOrderUuid())
+                .toUri();
         return ResponseEntity.created(location).body(order);
 
     }

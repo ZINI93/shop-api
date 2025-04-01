@@ -14,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -33,7 +34,12 @@ public class CartController {
         String memberUuid = customUserDetails.getMemberUuid();
 
         CartResponseDto cart = cartService.createCart(memberUuid, requestDto);
-        URI location = URI.create("/api/cart/" + memberUuid);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{cartUuid}")
+                .buildAndExpand(cart.getCartUuid())
+                .toUri();
+
         return ResponseEntity.created(location).body(cart);
     }
 

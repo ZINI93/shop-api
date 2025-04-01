@@ -1,14 +1,15 @@
 package com.zinikai.shop.domain.product.dto;
 
-import com.querydsl.core.annotations.QueryProjection;
 import com.zinikai.shop.domain.product.entity.ProductCondition;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-public class ProductResponseDto {
+@Builder
+public class ProductWithImagesDto {
 
     private String name;
     private BigDecimal price;
@@ -17,17 +18,10 @@ public class ProductResponseDto {
     private ProductCondition productCondition;
     private String productMaker;
     private String productUuid;
-
-    @QueryProjection
-    public ProductResponseDto(String name, BigDecimal price, String description, Integer stock) {
-        this.name = name;
-        this.price = price;
-        this.description = description;
-        this.stock = stock;
-    }
+    private List<String> productImages;
 
     @Builder
-    public ProductResponseDto(String name, BigDecimal price, String description, Integer stock, ProductCondition productCondition, String productMaker, String productUuid) {
+    public ProductWithImagesDto(String name, BigDecimal price, String description, Integer stock, ProductCondition productCondition, String productMaker, String productUuid, List<String> productImages) {
         this.name = name;
         this.price = price;
         this.description = description;
@@ -35,5 +29,6 @@ public class ProductResponseDto {
         this.productCondition = productCondition;
         this.productMaker = productMaker;
         this.productUuid = productUuid;
+        this.productImages = productImages;
     }
 }

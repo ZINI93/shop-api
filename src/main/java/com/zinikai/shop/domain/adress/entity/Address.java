@@ -57,7 +57,7 @@ public class Address extends TimeStamp {
                 .state(this.state)
                 .city(this.city)
                 .street(this.street)
-                .memberId(this.member.getId())
+                .AddressUuid(this.getAddressUuid())
                 .build();
     }
 
