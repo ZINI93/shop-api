@@ -243,7 +243,7 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
   - `購入者の決済金額をエスクローアカウント(一時保管)に安全に保管します。`
   - `商品の在庫が減少します。`
 - **URL:** `/api/payments/{paymentUuId}/completed"`
-- 
+
 #### **3) お支払いキャンセル**　
 - **HTTPメソッド:** `PUT`
 - **URL:** `/api/payments/{paymentUuId}/cancel"`

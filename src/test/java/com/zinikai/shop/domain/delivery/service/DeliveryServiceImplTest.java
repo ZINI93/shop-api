@@ -115,7 +115,7 @@ class DeliveryServiceImplTest {
 
         //then
         assertNotNull(result);
-        assertEquals(member.getMemberUuid(), result.getOwnerUuid());
+        assertEquals(orders.getOrderUuid(), result.getOrderUuid());
 
 
         verify(deliveryRepository, times(1)).findByMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid());

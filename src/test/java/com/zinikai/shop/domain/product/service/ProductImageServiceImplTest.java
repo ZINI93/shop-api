@@ -2,9 +2,7 @@ package com.zinikai.shop.domain.product.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
-import com.zinikai.shop.domain.product.dto.ProductImageRequestDto;
-import com.zinikai.shop.domain.product.dto.ProductWithImagesDto;
-import com.zinikai.shop.domain.product.dto.ProductImageUpdateDto;
+import com.zinikai.shop.domain.product.dto.*;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
@@ -88,13 +86,13 @@ class ProductImageServiceImplTest {
 
         //given
         PageRequest pageable = PageRequest.of(0, 10);
-        List<ProductWithImagesDto> mockProductImages = List.of(productImage.toResponse());
-        Page<ProductWithImagesDto> mockImagePage = new PageImpl<>(mockProductImages, pageable, mockProductImages.size());
+        List<ProductImageResponseDto> mockProductImages = List.of(productImage.toResponse());
+        Page<ProductImageResponseDto> mockImagePage = new PageImpl<>(mockProductImages, pageable, mockProductImages.size());
 
         when(productImageRepository.findAllByOwnerUuid(member.getMemberUuid(), pageable)).thenReturn(mockImagePage);
         //when
 
-        Page<ProductWithImagesDto> result = productImageService.getImagesByMember(member.getMemberUuid(), pageable);
+        Page<ProductImageResponseDto> result = productImageService.getImagesByMember(member.getMemberUuid(), pageable);
 
         //then
         assertNotNull(result);
@@ -112,7 +110,7 @@ class ProductImageServiceImplTest {
         when(productImageRepository.findByOwnerUuidAndProductImageUuid(member.getMemberUuid(), product.getProductUuid())).thenReturn(Optional.ofNullable(productImage));
 
         //when
-        ProductWithImagesDto result = productImageService.updateProductImage(member.getMemberUuid(), product.getProductUuid(), updateDto);
+        ProductImageResponseDto result = productImageService.updateProductImage(member.getMemberUuid(), product.getProductUuid(), updateDto);
 
 
         //then
