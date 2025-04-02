@@ -56,7 +56,6 @@ public class OrderApiController {
                 .toUri();
 
         return ResponseEntity.created(location).body(order);
-
     }
 
     @GetMapping("{orderUuid}")
