@@ -35,7 +35,7 @@ public class OrderApiController {
         OrdersResponseDto order = orderService.createOrder(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{orderUuid}")
+                .path("{orderUuid}")
                 .buildAndExpand(order.getOrderUuid())
                 .toUri();
         return ResponseEntity.created(location).body(order);
