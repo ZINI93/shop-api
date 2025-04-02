@@ -36,7 +36,7 @@ public class CartController {
         CartResponseDto cart = cartService.createCart(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{cartUuid}")
+                .path("{cartUuid}")
                 .buildAndExpand(cart.getCartUuid())
                 .toUri();
 

@@ -48,7 +48,7 @@ public class DeliveryApiController {
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{deliveryUuid}")
+                .path("{deliveryUuid}")
                 .buildAndExpand(delivery.getDeliveryUuid())
                 .toUri();
 

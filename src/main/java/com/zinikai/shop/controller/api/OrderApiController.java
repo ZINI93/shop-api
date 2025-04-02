@@ -3,8 +3,6 @@ package com.zinikai.shop.controller.api;
 import com.zinikai.shop.domain.member.service.CustomUserDetails;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
-import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
-import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.service.OrdersService;
 import jakarta.validation.Valid;
@@ -43,14 +41,20 @@ public class OrderApiController {
         return ResponseEntity.created(location).body(order);
 
     }
+
     @PostMapping("/carts")
     public ResponseEntity<OrdersResponseDto> createOrderFromCart(@Valid @RequestBody OrdersRequestDto requestDto,
-                                                         Authentication authentication) {
+                                                                 Authentication authentication) {
 
         String memberUuid = getMemberUuid(authentication);
 
         OrdersResponseDto order = orderService.createOrderFromCart(memberUuid, requestDto);
-        URI location = URI.create("/api/orders/carts" + memberUuid);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("{orderUuid}")
+                .buildAndExpand(order.getOrderUuid())
+                .toUri();
+
         return ResponseEntity.created(location).body(order);
 
     }

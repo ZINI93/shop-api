@@ -29,7 +29,7 @@ public class AddressApiController {
         AddressResponseDto address = addressService.createAddress(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{addressUuid}")
+                .path("{addressUuid}")
                 .buildAndExpand(address.getAddressUuid())
                 .toUri();
         return ResponseEntity.created(location).body(address);

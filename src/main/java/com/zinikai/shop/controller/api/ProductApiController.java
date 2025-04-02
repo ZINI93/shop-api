@@ -38,7 +38,7 @@ public class ProductApiController {
         ProductResponseDto product = productService.createProduct(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{productUuid}")
+                .path("{productUuid}")
                 .buildAndExpand(product.getProductUuid())
                 .toUri();
 

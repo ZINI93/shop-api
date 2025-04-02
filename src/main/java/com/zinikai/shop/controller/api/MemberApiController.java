@@ -27,7 +27,7 @@ public class MemberApiController {
         MemberResponseDto member = memberService.createMember(requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{memberUuid}")
+                .path("{memberUuid}")
                 .buildAndExpand(member.getMemberUuid())
                 .toUri();
         return ResponseEntity.created(location).body(member);
