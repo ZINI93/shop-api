@@ -74,7 +74,6 @@ public class Delivery extends TimeStamp {
                 .deliveryStatus(this.deliveryStatus)
                 .trackingNumber(this.trackingNumber)
                 .carrier(this.carrier)
-                .ownerUuid(this.ownerUuid)
                 .buyerUuid(this.buyerUuid)
                 .deliveryUuid(this.deliveryUuid)
                 .build();

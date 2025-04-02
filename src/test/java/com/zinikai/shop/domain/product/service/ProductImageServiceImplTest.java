@@ -2,26 +2,20 @@ package com.zinikai.shop.domain.product.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
-import com.zinikai.shop.domain.product.dto.ProductImageRequestDto;
-import com.zinikai.shop.domain.product.dto.ProductImageResponseDto;
-import com.zinikai.shop.domain.product.dto.ProductImageUpdateDto;
-import com.zinikai.shop.domain.product.dto.ProductResponseDto;
+import com.zinikai.shop.domain.product.dto.*;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
-import org.hibernate.sql.ast.tree.expression.CaseSimpleExpression;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.internal.matchers.Any;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -29,7 +23,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
@@ -85,22 +78,6 @@ class ProductImageServiceImplTest {
                 member.getMemberUuid(),
                 UUID.randomUUID().toString());
 
-
-    }
-
-    @Test
-    void createProductImage() {
-        //given
-        when(memberRepository.findById(member.getId())).thenReturn(Optional.ofNullable(member));
-        when(productRepository.findById(product.getId())).thenReturn(Optional.ofNullable(product));
-        when(productImageRepository.save(any(ProductImage.class))).thenReturn(productImage);
-
-        //when
-        ProductImageResponseDto result = productImageService.createProductImage(member.getId(), requestDto);
-
-        assertNotNull(result);
-        assertEquals(requestDto.getImageUrl(), result.getImageUrl());
-        verify(productImageRepository, times(1)).save(any(ProductImage.class));
 
     }
 

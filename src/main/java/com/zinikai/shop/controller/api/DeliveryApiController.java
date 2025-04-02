@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
@@ -45,7 +46,12 @@ public class DeliveryApiController {
 
         DeliveryResponseDto delivery = deliveryService.createDelivery(sellerUuid, requestDto);
 
-        URI location = URI.create("/api/delivers" + delivery.getDeliveryUuid());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("{deliveryUuid}")
+                .buildAndExpand(delivery.getDeliveryUuid())
+                .toUri();
+
         return ResponseEntity.created(location).body(delivery);
     }
 

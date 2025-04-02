@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
@@ -26,7 +27,11 @@ public class AddressApiController {
         String memberUuid = getMemberUuid(authentication);
 
         AddressResponseDto address = addressService.createAddress(memberUuid, requestDto);
-        URI location = URI.create("/api/address" + address.getId());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("{addressUuid}")
+                .buildAndExpand(address.getAddressUuid())
+                .toUri();
         return ResponseEntity.created(location).body(address);
     }
 

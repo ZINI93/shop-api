@@ -68,6 +68,8 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
                 .totalAmount(this.totalAmount)
                 .status(this.status)
                 .paymentMethod(this.paymentMethod)
+                .sellerUuid(this.sellerUuid)
+                .orderUuid(this.getOrderUuid())
                 .build();
     }
     public void updateInfo(BigDecimal totalAmount, Status status, String paymentMethod) {

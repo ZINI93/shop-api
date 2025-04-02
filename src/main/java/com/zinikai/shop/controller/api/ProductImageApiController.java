@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/product-images")
@@ -23,23 +23,27 @@ public class ProductImageApiController {
 
     private final ProductImageService productImageService;
 
-    @PostMapping
-    public ResponseEntity<ProductImageResponseDto> createProductImage(@Valid @RequestBody ProductImageRequestDto requestDto,
-                                                                      Authentication authentication) {
+    @GetMapping("{productUuid}")
+    public ResponseEntity<List<ProductImageResponseDto>> getImagesInProduct(@PathVariable String productUuid) {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        Long memberId = customUserDetails.getMemberId();
+        List<ProductImageResponseDto> productImages = productImageService.getImagesInProduct(productUuid);
 
-        ProductImageResponseDto productImage = productImageService.createProductImage(memberId, requestDto);
-        URI location = URI.create("/api/product/productImage" + productImage.getId());
-        return ResponseEntity.created(location).body(productImage);
+        return ResponseEntity.ok(productImages);
 
     }
 
+    @GetMapping("/product/{productUuid}")
+    public ResponseEntity<ProductWithImagesDto> getProductInfoWithImages(@PathVariable String productUuid) {
 
-    @GetMapping("/me")
+        ProductWithImagesDto productWithImages = productImageService.getProductWithImages(productUuid);
+
+        return ResponseEntity.ok(productWithImages);
+
+    }
+
+    @GetMapping("/all-images")
     public ResponseEntity<Page<ProductImageResponseDto>> getMyImages(Authentication authentication,
-                                                                     @PageableDefault(size = 10, page = 0) Pageable pageable) {
+                                                                  @PageableDefault(size = 10, page = 0) Pageable pageable) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String ownerUuid = customUserDetails.getMemberUuid();
@@ -47,13 +51,12 @@ public class ProductImageApiController {
         Page<ProductImageResponseDto> productImages = productImageService.getImagesByMember(ownerUuid, pageable);
 
         return ResponseEntity.ok(productImages);
-
     }
 
     @PutMapping("{productImageUuid}")
     public ResponseEntity<ProductImageResponseDto> editProductImage(@PathVariable String productImageUuid,
-                                                                    Authentication authentication,
-                                                                    @Valid @RequestBody ProductImageUpdateDto UpdateDto) {
+                                                                 Authentication authentication,
+                                                                 @Valid @RequestBody ProductImageUpdateDto UpdateDto) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String memberUuid = customUserDetails.getMemberUuid();

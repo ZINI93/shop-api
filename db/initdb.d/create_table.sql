@@ -28,7 +28,7 @@ create Table `address` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
-    CONSTRAINT `fk_order_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_order_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON delete CASCADE,
     CONSTRAINT `fk_address_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE
 );
 
@@ -38,9 +38,14 @@ create TABLE `product` (
     `price` DECIMAL(10,2) NOT NULL,
     `description` VARCHAR(255) NOT NULL,
     `stock` INT NOT NULL,
+    `product_status` VARCHAR(25) NOT NULL,
+    `product_condition` VARCHAR(25) NOT NULL,
+    `product_maker` VARCHAR(100) NOT NULL,
     `product_uuid` VARCHAR(36) NOT NULL UNIQUE,
     `owner_uuid` VARCHAR(36) NOT NULL,
 
+    CONSTRAINT `chk_product_status` CHECK (`product_status` IN ('ON_SALE', 'SOLD_OUT', 'DISCONTINUED')),
+    CONSTRAINT `chk_product_condition` CHECK (`product_condition` IN ('NEW', 'LIKE_NEW', 'USED_GOOD', 'USED_FAIR', 'USED_POOR')),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP
 );
@@ -96,7 +101,7 @@ create TABLE `delivery` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
     CONSTRAINT `fk_delivery_order` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
-    CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON delete CASCADE,
     CONSTRAINT `chk_delivery_status` CHECK (`delivery_status` IN ('PENDING', 'SHIPPED', 'DELIVERED', 'IN_TRANSIT', 'CANCELLED')),
     CONSTRAINT `chk_carrier` CHECK (`carrier` IN ('YAMATO', 'JAPANPOST'))
 );

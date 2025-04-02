@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface ProductService {
 
-    ProductResponseDto createProduct(Long memberId, ProductRequestDto productRequestDto);
+    ProductResponseDto createProduct(String memberUuid, ProductRequestDto productRequestDto);
 
     Page<ProductResponseDto>  searchProducts(String ownerUuid,String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
 

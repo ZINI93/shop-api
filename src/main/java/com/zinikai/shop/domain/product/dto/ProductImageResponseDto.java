@@ -1,6 +1,5 @@
 package com.zinikai.shop.domain.product.dto;
 
-import com.zinikai.shop.domain.product.entity.Product;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,16 +7,13 @@ import lombok.Data;
 @Builder
 public class ProductImageResponseDto {
 
-    private Long id;
-
-    private Product product;
-
     private String imageUrl;
+    private String productImageUuid;
+
 
     @Builder
-    public ProductImageResponseDto(Long id, Product product, String imageUrl) {
-        this.id = id;
-        this.product = product;
+    public ProductImageResponseDto(String imageUrl, String productImageUuid) {
         this.imageUrl = imageUrl;
+        this.productImageUuid = productImageUuid;
     }
 }

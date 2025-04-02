@@ -8,27 +8,25 @@ import lombok.Data;
 @Data
 @Builder
 public class MemberResponseDto {
-    private Long id;
     private String email;
     private String name;
     private String phoneNumber;
-    private MemberRole role;
-
-    @Builder
-    public MemberResponseDto(Long id, String email, String name, String phoneNumber, MemberRole role) {
-        this.id = id;
-        this.email = email;
-        this.name = name;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-    }
+    private String memberUuid;
 
 
     @QueryProjection
-    public MemberResponseDto(Long id, String email, String name, String phoneNumber) {
-        this.id = id;
+    public MemberResponseDto(String email, String name, String phoneNumber) {
         this.email = email;
         this.name = name;
         this.phoneNumber = phoneNumber;
+    }
+
+
+    @Builder
+    public MemberResponseDto(String email, String name, String phoneNumber, String memberUuid) {
+        this.email = email;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.memberUuid = memberUuid;
     }
 }

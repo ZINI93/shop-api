@@ -15,19 +15,17 @@ public class DeliveryResponseDto {
     private DeliveryStatus deliveryStatus;
     private String trackingNumber;
     private Carrier carrier;
-    private String ownerUuid;
     private String buyerUuid;
     private String deliveryUuid;
 
 
     @Builder
-    public DeliveryResponseDto(String orderUuid, String addressUuid, DeliveryStatus deliveryStatus, String trackingNumber, Carrier carrier, String ownerUuid, String buyerUuid, String deliveryUuid) {
+    public DeliveryResponseDto(String orderUuid, String addressUuid, DeliveryStatus deliveryStatus, String trackingNumber, Carrier carrier, String buyerUuid, String deliveryUuid) {
         this.orderUuid = orderUuid;
         this.addressUuid = addressUuid;
         this.deliveryStatus = deliveryStatus;
         this.trackingNumber = trackingNumber;
         this.carrier = carrier;
-        this.ownerUuid = ownerUuid;
         this.buyerUuid = buyerUuid;
         this.deliveryUuid = deliveryUuid;
     }

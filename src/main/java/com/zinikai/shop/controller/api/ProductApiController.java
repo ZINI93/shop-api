@@ -31,14 +31,15 @@ public class ProductApiController {
     @PostMapping
     public ResponseEntity<ProductResponseDto> createProduct(@Valid @RequestBody ProductRequestDto requestDto,
                                                             Authentication authentication) {
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        Long memberId = customUserDetails.getMemberId();
 
-        ProductResponseDto product = productService.createProduct(memberId, requestDto);
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        ProductResponseDto product = productService.createProduct(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(product.getId())
+                .path("{productUuid}")
+                .buildAndExpand(product.getProductUuid())
                 .toUri();
 
         return ResponseEntity.created(location).body(product);
@@ -53,19 +54,33 @@ public class ProductApiController {
             @PageableDefault(size = 20, page = 0) Pageable pageable,
             Authentication authentication) {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
         Page<ProductResponseDto> searchProducts = productService.searchProducts(memberUuid, keyword, minPrice, maxPrice, sortField, pageable);
         return ResponseEntity.ok(searchProducts);
     }
 
+
+    @GetMapping("{productUuid}")
+    public ResponseEntity<ProductResponseDto> getProductInfo(Authentication authentication,
+                                                             @PathVariable String productUuid){
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        ProductResponseDto product = productService.getProduct(memberUuid, productUuid);
+
+        return ResponseEntity.ok(product);
+    }
+
+
     @PutMapping("{productUuid}")
     public ResponseEntity<ProductResponseDto> updateProduct(@Valid @PathVariable String productUuid,
                                                             @RequestBody ProductUpdateDto updateDto,
                                                             Authentication authentication) {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
         ProductResponseDto updatedProduct = productService.updateProduct(memberUuid, productUuid, updateDto);
@@ -74,11 +89,15 @@ public class ProductApiController {
 
     }
 
+    private static CustomUserDetails getCustomUserDetails(Authentication authentication) {
+        return (CustomUserDetails) authentication.getPrincipal();
+    }
+
     @DeleteMapping("{productUuid}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String productUuid,
                                               Authentication authentication) {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
         productService.deleteProduct(memberUuid, productUuid);

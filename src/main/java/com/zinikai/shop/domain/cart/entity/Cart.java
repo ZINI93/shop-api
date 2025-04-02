@@ -47,6 +47,7 @@ public class Cart extends TimeStamp {
     public CartResponseDto toResponse() {
         return CartResponseDto.builder()
                 .quantity(this.quantity)
+                .cartUuid(this.getCartUuid())
                 .build();
     }
 

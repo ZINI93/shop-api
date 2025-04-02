@@ -6,6 +6,10 @@ import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.entity.ProductCondition;
+import com.zinikai.shop.domain.product.entity.ProductImage;
+import com.zinikai.shop.domain.product.entity.ProductStatus;
+import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,16 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,11 +32,14 @@ class ProductServiceImplTest {
 
     @Mock private ProductRepository productRepository;
     @Mock private MemberRepository memberRepository;
+    @Mock private ProductImageRepository productImageRepository;
     @InjectMocks private ProductServiceImpl productService;
 
     ProductRequestDto requestDto;
     Product product;
     Member member;
+    ProductImage productImage;
+
 
     private void setMemberId(Member member, Long id) throws Exception {
         Field field = member.getClass().getDeclaredField("id");
@@ -46,30 +47,38 @@ class ProductServiceImplTest {
         field.set(member, id);
     }
 
-
     @BeforeEach
     void setup() throws Exception {
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member, 1L);
 
+        product  = Product.builder().productUuid(UUID.randomUUID().toString()).build();
+
+        productImage = ProductImage.builder().imageUrl("www.image.com").productImageUuid(UUID.randomUUID().toString()).build();
+
+        requestDto = new ProductRequestDto(
+                "自転車",
+                new BigDecimal("2000.00"),
+                "キラキラ自転車",
+                10,
+                ProductCondition.NEW,
+                "zini-shop",
+                Collections.emptyList()
+        );
 
         product = new Product(
-                "kakao",
-                new BigDecimal(1000),
-                "美味しいカカオ",
-                10,
-                UUID.randomUUID().toString(),
+                requestDto.getName(),
+                requestDto.getPrice(),
+                requestDto.getDescription(),
+                requestDto.getStock(),
+                ProductStatus.ON_SALE,
+                requestDto.getProductCondition(),
+                requestDto.getProductMaker(),
+                product.getProductUuid(),
                 member.getMemberUuid()
         );
 
-
-        requestDto = new ProductRequestDto(
-                product.getName(),
-                product.getPrice(),
-                product.getDescription(),
-                product.getStock()
-        );
 
     }
 
@@ -77,19 +86,23 @@ class ProductServiceImplTest {
     @DisplayName("商品登録")
     void testCreateProduct() {
         //given
+        List<ProductImage> images = Arrays.asList(new ProductImage(product, "www.zini.com", member.getMemberUuid(),UUID.randomUUID().toString()));
 
-        when(memberRepository.findById(member.getId())).thenReturn(Optional.ofNullable(member));
+
+        when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(member));
         when(productRepository.save(any(Product.class))).thenReturn(product);
+        when(productImageRepository.saveAll(anyList())).thenReturn(images);
 
         //when
-        ProductResponseDto savedProduct = productService.createProduct(member.getId(),requestDto);
+        ProductResponseDto savedProduct = productService.createProduct(member.getMemberUuid(),requestDto);
 
         //then
         assertNotNull(savedProduct);
-        assertEquals("kakao", savedProduct.getName());
-        assertEquals(new BigDecimal(1000), savedProduct.getPrice());
+        assertEquals(requestDto.getName(), savedProduct.getName());
+        assertEquals(requestDto.getPrice(), savedProduct.getPrice());
 
         verify(productRepository, times(1)).save(any(Product.class));
+        verify(productImageRepository, times(1)).saveAll(anyList());
     }
 
 //    @Test

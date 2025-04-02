@@ -11,9 +11,11 @@ import lombok.Data;
 public class CartResponseDto {
 
     private Integer quantity;
+    private String cartUuid;
 
     @Builder
-    public CartResponseDto(Integer quantity) {
+    public CartResponseDto(Integer quantity, String cartUuid) {
         this.quantity = quantity;
+        this.cartUuid = cartUuid;
     }
 }

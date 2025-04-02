@@ -2,7 +2,8 @@ package com.zinikai.shop.domain.product.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.product.dto.ProductImageResponseDto;
-import com.zinikai.shop.domain.product.repository.ProductImageRepository;
+import com.zinikai.shop.domain.product.dto.ProductResponseDto;
+import com.zinikai.shop.domain.product.dto.ProductWithImagesDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -42,9 +43,8 @@ public class ProductImage extends TimeStamp {
 
     public ProductImageResponseDto toResponse() {
         return ProductImageResponseDto.builder()
-                .id(this.id)
-                .product(this.product)
                 .imageUrl(this.imageUrl)
+                .productImageUuid(this.getProductImageUuid())
                 .build();
     }
 

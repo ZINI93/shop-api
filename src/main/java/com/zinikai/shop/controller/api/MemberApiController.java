@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
@@ -24,7 +25,11 @@ public class MemberApiController {
     @PostMapping("/join")
     public ResponseEntity<MemberResponseDto> createMember(@Valid @RequestBody MemberRequestDto requestDto){
         MemberResponseDto member = memberService.createMember(requestDto);
-        URI location = URI.create("/api/member" + member.getId());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("{memberUuid}")
+                .buildAndExpand(member.getMemberUuid())
+                .toUri();
         return ResponseEntity.created(location).body(member);
     }
 

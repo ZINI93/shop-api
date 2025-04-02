@@ -71,11 +71,11 @@ class AddressServiceImplTest {
     @Test
     void testCreateAddress() {
         //given
-        when(memberRepository.findById(member.getId())).thenReturn(Optional.ofNullable(member));
+        when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(member));
         when(addressRepository.save(any(Address.class))).thenReturn(address);
 
         //when
-        AddressResponseDto result = addressService.createAddress(member.getId(), requestDto);
+        AddressResponseDto result = addressService.createAddress(member.getMemberUuid(), requestDto);
 
         //then
         assertNotNull(result);

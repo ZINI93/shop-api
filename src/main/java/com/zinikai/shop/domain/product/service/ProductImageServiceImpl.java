@@ -1,9 +1,8 @@
 package com.zinikai.shop.domain.product.service;
 
-import com.zinikai.shop.domain.member.entity.Member;
-import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.product.dto.*;
 import com.zinikai.shop.domain.product.entity.Product;
+import com.zinikai.shop.domain.product.entity.ProductCondition;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
@@ -14,7 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -25,34 +26,19 @@ public class ProductImageServiceImpl implements ProductImageService {
 
     private final ProductImageRepository productImageRepository;
     private final ProductRepository productRepository;
-    private final MemberRepository memberRepository;
+
 
     @Override
-    @Transactional
-    public ProductImageResponseDto createProductImage(Long memberId, ProductImageRequestDto requestDto) {
+    public List<ProductImageResponseDto> getImagesInProduct(String productUuid) {
 
-        log.info("Creating ProductImage for member ID: {}", memberId);
+        List<ProductImage> images = productImageRepository.findAllByProductProductUuid(productUuid);
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("Not found user ID"));
+        if (images.isEmpty()) {
+            throw new IllegalArgumentException("Not found product image");
+        }
 
-        Product product = productRepository.findById(requestDto.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("Not found product ID"));
-
-
-        ProductImage savedProductImage = ProductImage.builder()
-                .product(product)
-                .imageUrl(requestDto.getImageUrl())
-                .ownerUuid(member.getMemberUuid())
-                .build();
-
-        log.info("Created product : {}", savedProductImage);
-
-
-
-        return productImageRepository.save(savedProductImage).toResponse();
+        return images.stream().map(ProductImage::toResponse).collect(Collectors.toList());
     }
-
 
     @Override
     public Page<ProductImageResponseDto> getImagesByMember(String ownerUuid, Pageable pageable) {
@@ -69,7 +55,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         log.info("Updating productImage for member UUID:{}, productImage UUID:{}", ownerUuid, productImageUuid);
 
         ProductImage productImage = productImageRepository.findByOwnerUuidAndProductImageUuid(ownerUuid, productImageUuid)
-                .orElseThrow(() -> new IllegalArgumentException("該当する商品イメージが見つかりません"));
+                .orElseThrow(() -> new IllegalArgumentException("Not found Owner UUID: " + ownerUuid + "ProductImage UUID:" + productImageUuid));
 
         matchOwnerUuid(ownerUuid, productImage);
 
@@ -82,6 +68,24 @@ public class ProductImageServiceImpl implements ProductImageService {
     }
 
     @Override
+    public ProductWithImagesDto getProductWithImages(String productUuid) {
+
+        Product product = productRepository.findByProductUuid(productUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found product UUID"));
+
+        List<ProductImage> productImagesByProductUuid = productImageRepository.findProductImagesByProductUuid(productUuid);
+
+        List<String> imageUrls = productImagesByProductUuid.stream()
+                .map(ProductImage::getImageUrl)
+                .collect(Collectors.toList());
+
+        return new ProductWithImagesDto(product.getName(), product.getPrice(), product.getDescription(), product.getStock(), ProductCondition.NEW, product.getProductMaker(),
+                productUuid, imageUrls);
+
+    }
+
+
+    @Override
     @Transactional
     public void deleteProductImage(String ownerUuid, String productImageUuid) {
 
@@ -90,13 +94,13 @@ public class ProductImageServiceImpl implements ProductImageService {
         ProductImage productImage = productImageRepository.findByOwnerUuidAndProductImageUuid(ownerUuid, productImageUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Owner UUID does not match the productImage owner"));
 
-        matchOwnerUuid(ownerUuid,productImage);
+        matchOwnerUuid(ownerUuid, productImage);
 
         productImageRepository.delete(productImage);
     }
 
     private static void matchOwnerUuid(String ownerUuid, ProductImage productImage) {
-        if (!Objects.equals(productImage.getOwnerUuid(), ownerUuid)){
+        if (!Objects.equals(productImage.getOwnerUuid(), ownerUuid)) {
             throw new IllegalArgumentException("Owner UUID does not match ProductImage owner");
         }
     }

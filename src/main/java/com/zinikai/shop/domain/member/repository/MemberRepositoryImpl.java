@@ -26,7 +26,6 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
         List<MemberResponseDto> content = queryFactory
                 .select(new QMemberResponseDto(
-                        member.id.as("memberId"),
                         member.email,
                         member.name,
                         member.phoneNumber))

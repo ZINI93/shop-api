@@ -1,13 +1,14 @@
 package com.zinikai.shop.domain.product.dto;
 
+import com.zinikai.shop.domain.product.entity.ProductCondition;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-@Builder
 public class ProductRequestDto {
 
     @NotBlank
@@ -27,11 +28,19 @@ public class ProductRequestDto {
     @Max(value = 1000000 , message = "在庫は1000個以内で入力してください")
     private Integer stock;
 
+    private ProductCondition productCondition;
+
+    private String productMaker;
+
+    private List<ProductImageResponseDto> productImages;
     @Builder
-    public ProductRequestDto(String name, BigDecimal price, String description, Integer stock) {
+    public ProductRequestDto(String name, BigDecimal price, String description, Integer stock, ProductCondition productCondition, String productMaker,List<ProductImageResponseDto> productImages) {
         this.name = name;
         this.price = price;
         this.description = description;
         this.stock = stock;
+        this.productCondition = productCondition;
+        this.productMaker = productMaker;
+        this.productImages = productImages;
     }
 }

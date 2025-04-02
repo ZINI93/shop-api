@@ -5,20 +5,18 @@ import lombok.*;
 @Builder
 public class AddressResponseDto {
 
-    private Long Id;
-    private Long memberId;
     private String zipcode;
     private String state;
     private String city;
     private String street;
+    private String AddressUuid;
 
     @Builder
-    public AddressResponseDto(Long id, Long memberId, String zipcode, String state, String city, String street) {
-        this.Id = id;
-        this.memberId = memberId;
+    public AddressResponseDto(String zipcode, String state, String city, String street, String addressUuid) {
         this.zipcode = zipcode;
         this.state = state;
         this.city = city;
         this.street = street;
+        AddressUuid = addressUuid;
     }
 }

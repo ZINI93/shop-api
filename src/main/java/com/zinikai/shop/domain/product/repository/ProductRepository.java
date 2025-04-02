@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom{
+public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
 
     Optional<Product> findByProductUuid(String productUuid);
+
     Optional<Product> findByOwnerUuid(String ownerUuid);
 
-    Optional<Product> findByOwnerUuidAndProductUuid(String ownerUuid,String productUuid);
+    Optional<Product> findByOwnerUuidAndProductUuid(String ownerUuid, String productUuid);
 
     List<Product> findAllByProductUuidIn(List<String> productUUid);
 }

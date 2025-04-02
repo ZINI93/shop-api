@@ -36,10 +36,10 @@ public class CartServiceImpl implements CartService {
         log.info("Creating cart for member ID :{}", memberUuid);
 
         Member member = memberRepository.findByMemberUuid(memberUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found member ID"));
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
 
         Product product = productRepository.findByProductUuid(requestDto.getProductUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found Product Id"));
+                .orElseThrow(() -> new IllegalArgumentException("Not found Product UUID"));
 
         Cart cart = cartRepository.findByMemberMemberUuidAndProductId(member.getMemberUuid(), product.getId())
                 .orElse(null);
