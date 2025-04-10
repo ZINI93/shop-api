@@ -60,7 +60,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf((csrfConfig) -> csrfConfig.ignoringRequestMatchers("/api/**", "/authenticate"))  // ✅ CSRF 예외 추가
+                .csrf((csrfConfig) -> csrfConfig.ignoringRequestMatchers("/api/**", "/authenticate"))  // CSRF 예외 추가
                 .headers((headerConfig) ->
                         headerConfig.frameOptions(frameOptionsConfig -> frameOptionsConfig.sameOrigin())
                 )

@@ -1,4 +1,4 @@
-create TABLE `member` (
+create TABLE `members` (
     `member_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `email` VARCHAR(255) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
@@ -15,7 +15,7 @@ create TABLE `member` (
     CONSTRAINT `chk_member_role` CHECK (`role` IN ('USER', 'ADMIN'))
 );
 
-create Table `address` (
+create Table `addresses` (
     `address_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `zipcode` VARCHAR(10) NOT NULL,
     `state` VARCHAR(255) NOT NULL,
@@ -28,11 +28,10 @@ create Table `address` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
-    CONSTRAINT `fk_order_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON delete CASCADE,
-    CONSTRAINT `fk_address_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE
+    CONSTRAINT `fk_address_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) ON delete CASCADE
 );
 
-create TABLE `product` (
+create TABLE `products` (
     `product_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(100) NOT NULL UNIQUE,
     `price` DECIMAL(10,2) NOT NULL,
@@ -54,6 +53,7 @@ create TABLE `orders` (
     `orders_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `member_id` BIGINT NOT NULL,
     `total_amount` DECIMAL(19,2) NOT NULL,
+    `discount_amount` DECIMAL(19,2) NOT NULL,
     `status` VARCHAR(25) NOT NULL,
     `payment_method` VARCHAR(50) NOT NULL,
     `seller_uuid` VARCHAR(36) NOT NULL,
@@ -64,10 +64,11 @@ create TABLE `orders` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
     CONSTRAINT `chk_order_status` CHECK (`status` IN ('PENDING', 'COMPLETED', 'CANCELLED')),
-    CONSTRAINT `fk_order_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE
+    CONSTRAINT `fk_order_address` FOREIGN KEY (`address_id`) REFERENCES `addresses`(`address_id`) ON delete CASCADE,
+    CONSTRAINT `fk_order_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) ON delete CASCADE
 );
 
-create TABLE `order_item` (
+create TABLE `order_items` (
     `order_item_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `orders_id` BIGINT NOT NULL,
      `product_id` BIGINT NOT NULL,
@@ -81,10 +82,10 @@ create TABLE `order_item` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
     CONSTRAINT `fk_order_item_orders` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
-    CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON delete CASCADE
+    CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`product_id`) ON delete CASCADE
 );
 
-create TABLE `delivery` (
+create TABLE `deliveries` (
     `delivery_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `orders_id` BIGINT NOT NULL,
     `address_id` BIGINT NOT NULL,
@@ -101,13 +102,13 @@ create TABLE `delivery` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
     CONSTRAINT `fk_delivery_order` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
-    CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `address`(`address_id`) ON delete CASCADE,
+    CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `addresses`(`address_id`) ON delete CASCADE,
     CONSTRAINT `chk_delivery_status` CHECK (`delivery_status` IN ('PENDING', 'SHIPPED', 'DELIVERED', 'IN_TRANSIT', 'CANCELLED')),
     CONSTRAINT `chk_carrier` CHECK (`carrier` IN ('YAMATO', 'JAPANPOST'))
 );
 
 
-create TABLE `cart` (
+create TABLE `carts` (
     `cart_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `member_id` BIGINT NOT NULL,
     `product_id` BIGINT NOT NULL,
@@ -117,12 +118,12 @@ create TABLE `cart` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
-    CONSTRAINT `fk_cart_member` FOREIGN KEY (`member_id`) REFERENCES `member`(`member_id`) ON delete CASCADE,
-    CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON delete CASCADE,
+    CONSTRAINT `fk_cart_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) ON delete CASCADE,
+    CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`product_id`) ON delete CASCADE,
     CONSTRAINT `unique_member_product` UNIQUE (`member_id`, `product_id`)
 );
 
-create TABLE `payment` (
+create TABLE `payments` (
     `payment_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `orders_id` BIGINT NOT NULL,
     `status` VARCHAR(50) NOT NULL,
@@ -137,7 +138,7 @@ create TABLE `payment` (
     CONSTRAINT `chk_payment_status` CHECK (`status` IN ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'))
 );
 
-create TABLE `product_image` (
+create TABLE `product_images` (
     `image_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `product_id` BIGINT NOT NULL,
     `image_url` VARCHAR(255) NOT NULL,
@@ -147,5 +148,58 @@ create TABLE `product_image` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
-    CONSTRAINT `fk_product_image` FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON delete CASCADE
+    CONSTRAINT `fk_product_image` FOREIGN KEY (`product_id`) REFERENCES `products`(`product_id`) ON delete CASCADE
 );
+
+create TABLE `coupons` (
+    `coupon_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `coupon_uuid` VARCHAR(36) NOT NULL,
+    `owner_uuid` VARCHAR(36) NOT NULL,
+    `name` VARCHAR(36) NOT NULL,
+    `start_date` DATETIME NOT NULL,
+    `end_date` DATETIME NOT NULL,
+    `min_order_Amount` DECIMAL(19,2) NOT NULL,
+    `discount_value` DECIMAL(19,2) NOT NULL,
+    `discount_type` VARCHAR(36) NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
+    `max_usage` INT NOT NULL,
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `chk_discount_type` CHECK (`discount_type` IN ('PERCENTAGE', 'FIXED_AMOUNT'))
+);
+
+create TABLE `user_coupons` (
+    `user_coupon_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `member_id` BIGINT NOT NULL,
+    `coupon_id` BIGINT NOT NULL,
+    `orders_id` BIGINT,
+    `used_at` DATETIME,
+    `is_used` Boolean NOT NULL,
+    `user_coupon_uuid` VARCHAR(36) NOT NULL,
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_user_coupons_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) ON delete CASCADE,
+    CONSTRAINT `fk_user_coupons_coupons` FOREIGN KEY (`coupon_id`) REFERENCES `coupons`(`coupon_id`) ON delete CASCADE,
+    CONSTRAINT `fk_user_coupons_order` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE
+);
+
+create TABLE `coupon_usages` (
+    `coupon_usage_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `user_coupon_id` BIGINT NOT NULL,
+    `orders_id` BIGINT NOT NULL,
+    `coupon_usage_uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `discount_amount` DECIMAL(10,2) NOT NULL,
+    `used_at` DATETIME,
+    `member_uuid_used` VARCHAR(36) NOT NULL,
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_coupon_usage_user_coupons` FOREIGN KEY (`user_coupon_id`) REFERENCES `user_coupons`(`user_coupon_id`) ON delete CASCADE,
+    CONSTRAINT `fk_coupon_usage_orders` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE
+);
+

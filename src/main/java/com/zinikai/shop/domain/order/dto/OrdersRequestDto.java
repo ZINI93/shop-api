@@ -1,6 +1,7 @@
 package com.zinikai.shop.domain.order.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
+import com.zinikai.shop.domain.coupon.entity.Coupon;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Status;
@@ -23,12 +24,14 @@ public class OrdersRequestDto {
     @NotBlank(message = "お支払いの方法が必要です。")
     private String paymentMethod;
 
+    private String userCouponUuid;
+
     private List<OrderItemRequestDto> orderItems;
 
 
     @Builder
-    public OrdersRequestDto(String paymentMethod) {
-//        this.status = status;
+    public OrdersRequestDto(String paymentMethod, String userCouponUuid) {
         this.paymentMethod = paymentMethod;
+        this.userCouponUuid = userCouponUuid;
     }
 }

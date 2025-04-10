@@ -14,6 +14,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "members")
 @Entity
 public class Member extends TimeStamp {
 

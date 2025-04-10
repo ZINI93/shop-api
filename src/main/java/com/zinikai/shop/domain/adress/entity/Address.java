@@ -13,6 +13,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "addresses")
 @Entity
 public class Address extends TimeStamp {
 

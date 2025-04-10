@@ -11,6 +11,7 @@ import java.util.UUID;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "payments")
 @Entity
 public class Payment extends TimeStamp {
     @Id
