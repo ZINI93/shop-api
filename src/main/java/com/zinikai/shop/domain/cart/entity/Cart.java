@@ -13,7 +13,8 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(uniqueConstraints = {
+@Table(name = "carts",
+        uniqueConstraints = {
         @UniqueConstraint(name = "UniqueMemberProduct", columnNames = {"member_id", "product_id"})
 })
 public class Cart extends TimeStamp {

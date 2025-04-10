@@ -97,7 +97,7 @@ public class OrderApiController {
 
 
     @PutMapping("{orderUuid}/cancel")
-    public ResponseEntity<OrdersResponseDto> editOrder(@PathVariable String orderUuid,
+    public ResponseEntity<OrdersResponseDto> cancelOrder(@PathVariable String orderUuid,
                                                        Authentication authentication) {
 
         String memberUuid = getMemberUuid(authentication);

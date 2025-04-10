@@ -4,6 +4,13 @@ import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.adress.repository.AddressRepository;
 import com.zinikai.shop.domain.cart.entity.Cart;
 import com.zinikai.shop.domain.cart.repository.CartRepository;
+import com.zinikai.shop.domain.coupon.entity.Coupon;
+import com.zinikai.shop.domain.coupon.entity.CouponUsage;
+import com.zinikai.shop.domain.coupon.entity.DiscountType;
+import com.zinikai.shop.domain.coupon.entity.UserCoupon;
+import com.zinikai.shop.domain.coupon.repository.CouponRepository;
+import com.zinikai.shop.domain.coupon.repository.CouponUsageRepository;
+import com.zinikai.shop.domain.coupon.repository.UserCouponRepository;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
@@ -30,6 +37,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UnknownFormatConversionException;
 import java.util.stream.Collectors;
 
 
@@ -46,18 +55,24 @@ public class OrdersServiceImpl implements OrdersService {
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final CartRepository cartRepository;
+    private final UserCouponRepository userCouponRepository;
+    private final CouponUsageRepository couponUsageRepository;
 
     @Override
     @Transactional
     public OrdersResponseDto createOrder(String memberUuid, OrdersRequestDto requestDto) {
 
-        log.info("Creating order for member ID:{}", memberUuid);
+        log.info("Creating order for member UUID:{}", memberUuid);
 
         Member member = memberRepository.findByMemberUuid(memberUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID in the member"));
 
         Address address = addressRepository.findByMemberMemberUuid(memberUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+                .orElseThrow(() -> new IllegalArgumentException("Address in Not found member UUID in the address"));
+
+
+        UserCoupon userCoupon = userCouponRepository.findByMemberMemberUuidAndUserCouponUuid(memberUuid, requestDto.getUserCouponUuid())
+                .orElse(null);
 
         BigDecimal totalAmount = calculateTotalAmount(requestDto.getOrderItems());
 
@@ -85,13 +100,25 @@ public class OrdersServiceImpl implements OrdersService {
             }
         }
 
+        //クーポン適用
+        BigDecimal discountAmount = Optional.ofNullable(userCoupon)
+                .map(c -> c.calculateDiscountAmount(totalAmount, c.getCoupon()))
+                .orElse(BigDecimal.ZERO);
+        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+
+        if (finalAmount.compareTo(discountAmount) <= 0 ){
+            throw new IllegalArgumentException("Coupons require a minimum purchase of " + userCoupon.getCoupon().getMinOrderAmount() + "en");
+        }
+
+
         Orders orders = Orders.builder()
                 .member(member)
-                .totalAmount(totalAmount)
+                .totalAmount(finalAmount)
                 .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
                 .sellerUuid(sellerUuid)
                 .address(address)
+                .discountAmount(discountAmount)
                 .build();
 
         Orders savedOrders = ordersRepository.save(orders);
@@ -114,6 +141,19 @@ public class OrdersServiceImpl implements OrdersService {
 
         log.info("Created payment:{}", savedPayment);
 
+        if (userCoupon != null) {
+            userCoupon.usingCoupon(LocalDateTime.now(), orders);
+
+            CouponUsage savedCouponUsage = CouponUsage.builder()
+                    .userCoupon(userCoupon)
+                    .orders(savedOrders)
+                    .discountAmount(discountAmount)
+                    .usedAt(userCoupon.getUsedAt())
+                    .build();
+
+            couponUsageRepository.save(savedCouponUsage);
+        }
+
         return savedOrders.toResponseDto();
     }
 
@@ -127,6 +167,10 @@ public class OrdersServiceImpl implements OrdersService {
 
         Address address = addressRepository.findByMemberMemberUuid(memberUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+
+        UserCoupon userCoupon = userCouponRepository.findByMemberMemberUuidAndUserCouponUuid(memberUuid, requestDto.getUserCouponUuid())
+                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID"));
+
 
         List<Cart> carts = cartRepository.findAllByMemberMemberUuid(memberUuid);
 
@@ -149,13 +193,24 @@ public class OrdersServiceImpl implements OrdersService {
 
         BigDecimal totalAmount = CartCalculateTotalAmount(selectedCarts);
 
+        //クーポン適用
+        BigDecimal discountAmount = Optional.ofNullable(userCoupon)
+                .map(c -> c.calculateDiscountAmount(totalAmount, c.getCoupon()))
+                .orElse(BigDecimal.ZERO);
+        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+
+        if (finalAmount.compareTo(discountAmount) <= 0 ){
+            throw new IllegalArgumentException("Coupons require a minimum purchase of " + userCoupon.getCoupon().getMinOrderAmount() + "en");
+        }
+
         Orders orders = Orders.builder()
                 .member(member)
-                .totalAmount(totalAmount)
+                .totalAmount(finalAmount)
                 .status(Status.PENDING)
                 .paymentMethod(requestDto.getPaymentMethod())
                 .sellerUuid(sellerUuid)
                 .address(address)
+                .discountAmount(discountAmount)
                 .build();
 
         Orders savedOrders = ordersRepository.save(orders);
@@ -176,9 +231,29 @@ public class OrdersServiceImpl implements OrdersService {
 
         log.info("Created payment:{}", savedPayment);
 
+        if (userCoupon != null) {
+            userCoupon.usingCoupon(LocalDateTime.now(), orders);
+
+            CouponUsage savedCouponUsage = CouponUsage.builder()
+                    .userCoupon(userCoupon)
+                    .orders(savedOrders)
+                    .discountAmount(discountAmount)
+                    .usedAt(userCoupon.getUsedAt())
+                    .build();
+
+            couponUsageRepository.save(savedCouponUsage);
+        }
         return savedOrders.toResponseDto();
     }
 
+    public BigDecimal calculateFinalAmount(BigDecimal totalAmount, UserCoupon userCoupon) {
+        if (userCoupon == null || userCoupon.getCoupon() == null) {
+            return totalAmount;
+        }
+
+        BigDecimal discountAmount = userCoupon.calculateDiscountAmount(totalAmount, userCoupon.getCoupon());
+        return totalAmount.subtract(discountAmount);
+    }
 
     @Override
     public OrdersResponseDto getOrder(String memberUuid, String ordersUuid) {
@@ -206,6 +281,9 @@ public class OrdersServiceImpl implements OrdersService {
 
         Orders orders = ordersRepository.findByMemberMemberUuidAndOrderUuid(memberUuid, orderUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or order UUID "));
+
+        userCouponRepository.findByOrderOrderUuid(orders.getOrderUuid())
+                .ifPresent(UserCoupon::cancelCoupon);
 
         matchMemberUuid(memberUuid, orders);
 
@@ -251,6 +329,7 @@ public class OrdersServiceImpl implements OrdersService {
                 Status.CANCELLED,
                 expirationTime
         );
+
         log.info("Cancelled {} expired orders", updatedCount);
     }
 
@@ -261,6 +340,7 @@ public class OrdersServiceImpl implements OrdersService {
     }
 
     private void validateAmountAndPaymentMethod(BigDecimal totalAmount, String paymentMethod) {
+
         if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Price must be greater then or equal 0 en");
         }
@@ -289,4 +369,5 @@ public class OrdersServiceImpl implements OrdersService {
                 .map(cart -> cart.getProduct().getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 }

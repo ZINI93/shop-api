@@ -4,12 +4,10 @@ import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
-import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +16,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때문에 table을 생성하지 못한다;;;
+public class Orders extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "orders_id", nullable = false)
@@ -27,6 +25,10 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @Column(nullable = false)
     private BigDecimal totalAmount;
@@ -47,12 +49,11 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
     @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id")
-    private Address address;
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
 
     @Builder
-    public Orders(Member member, BigDecimal totalAmount, Status status, String paymentMethod, String orderUuid, Address address, String sellerUuid) {
+    public Orders(Member member, BigDecimal totalAmount, Status status, String paymentMethod, String orderUuid, Address address, String sellerUuid, BigDecimal discountAmount) {
         this.member = member;
         this.totalAmount = totalAmount;
         this.status = status;
@@ -60,6 +61,7 @@ public class Orders extends TimeStamp { // order은 mysql 예약어 이기 때�
         this.orderUuid = UUID.randomUUID().toString();
         this.sellerUuid = sellerUuid;
         this.address = address;
+        this.discountAmount = discountAmount;
     }
 
     public OrdersResponseDto toResponseDto() {

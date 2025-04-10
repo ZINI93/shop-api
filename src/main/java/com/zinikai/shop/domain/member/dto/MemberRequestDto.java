@@ -21,7 +21,7 @@ public class MemberRequestDto {
     private String name;
 
     @NotBlank(message = "電話番号を入力してください。")
-    @Pattern(regexp = "^0[789]0-\\d{4}-\\d{4}$", message = "有効な電話番号を入力してください。")
+    @Pattern(regexp = "^0[789]0\\d{4}\\d{4}$", message = "有効な電話番号を入力してください。")
     private String phoneNumber;
 
 

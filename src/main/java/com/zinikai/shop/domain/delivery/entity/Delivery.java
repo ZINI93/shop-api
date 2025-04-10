@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "deliveries")
 @Entity
 public class Delivery extends TimeStamp {
 

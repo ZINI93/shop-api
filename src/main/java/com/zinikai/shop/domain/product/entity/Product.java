@@ -13,6 +13,7 @@ import java.util.UUID;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "products")
 @Entity
 public class Product extends TimeStamp {
     @Id

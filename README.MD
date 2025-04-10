@@ -28,7 +28,8 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 
 #### **🛠 管理者 (アドミン)**
 - **システム管理**
-    - `システム全体をモニタリングし、ユーザーや商品を管理できます。`
+    - `システム全体をモニタリングし、ユーザーや商品を管理。`
+    - `クーポンを発行し、ユーザーへ配布`
 
 ### **API バージョン**
 #### **バージョン:** `v1.0`
@@ -95,7 +96,7 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
   "email": "zini@gmail.com",  
   "password": "Abc1234!@", 
   "name": "zini",
-  "phoneNumber": "080-1234-5678"
+  "phoneNumber": "08012345678"
 }
 ```
 #### **2) 会員情報の取得**
@@ -162,20 +163,23 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 #### **1) 注文作成**
 - **HTTPメソッド:** `POST`
 - **URL:** `/api/orders`
-- **注意点:** `注文を作成後、10分以内に完了しなければキャンセルされます。`
+- **注意点:** 
+- `注文を作成後、10分以内に完了しなければキャンセルされます。`
+- `クーポンは最低金額以上の購入が必要です。`
 
 
 **リクエスト本文:**
 ```json
 {
   "paymentMethod": "CREDIT_CARD",
+  "userCouponUuid": "e5fafedc-071f-47b3-9223-8e11e3dcff6b // or null",  
   "orderItems": [
     {
-      "productUuid": "68e540f2-ded2-4a6e-9e98-7eb939178807",
+      "productUuid": "b1b03656-0644-4425-85ee-44e98193b25e",
       "quantity": 10
     },
     {
-      "productUuid": "4b270bc5-5930-4c93-aad3-c3617212a26e",
+      "productUuid": "b72b7415-5e22-48e5-a0d7-2670318ea434",
       "quantity": 5
     }
   ]
@@ -187,8 +191,6 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 - **URL:** `/api/orders/carts`
 - **注意点:***
   - `注文を作成後、10分以内に完了しないとキャンセルされます。`
-
-
 
 **リクエスト本文:**
 ```json
@@ -205,6 +207,11 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 #### **3) 注文情報の取得**
 - **HTTPメソッド:** `GET`
 - **URL:** `/api/orders/{orderUuid}`
+
+
+#### **3) 注文をキャンセル**
+- **HTTPメソッド:** `put`
+- **URL:** `/api/orders/{orderUuid}/cancel`
 
 
 #### **4) 注文削除**
@@ -428,6 +435,84 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 #### **3) 発送を確定（購入者）**
 - **HTTPメソッド:** `PUT`
 - **URL:** `/api/delivers/{deliveryUuid}/delivered`
+
+---
+### 4.2. **クーポン機能（管理者）**
+
+#### **1) クーポンを発行**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/admin/coupons`
+- **注意点:***
+-  `管理者以外は発行不可`
+-  `発行日は未来の日付のみ選択可能です。`
+-  `最低金額の以上に購入ができます。`
+
+**リクエスト本文:**
+```json
+{
+  "name": "Open Coupon 300円 ",
+  "startDate": "2025-04-10T00:00:00Z",
+  "endDate": "2025-04-15T00:00:00Z",
+  "minOrderAmount": 2000.00,
+  "discountValue": 300,
+  "discountType": "FIXED_AMOUNT",
+  "description": "zini-shop open キャンペイン 300円 クーポン",
+  "maxUsage": "1"
+}
+```
+#### **2) クーポンの情報**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/admin/coupons/{couponUuid} `
+
+
+#### **2) クーポンのリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/admin/coupons/all-coupon`
+
+
+#### **4) クーポン情報の更新**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/admin/coupons/{couponUuid}`
+
+**リクエスト本文:**
+```json
+{
+  "name": "Open Coupon 10% ",
+  "startDate": "2025-04-06T00:00:00Z",
+  "endDate": "2025-04-19T00:00:00Z",
+  "minOrderAmount": 1000.00,
+  "discountValue": 10,
+  "discountType": "PERCENTAGE",
+  "description": "zini-shop open 10% coupon",
+  "maxUsage": "3"
+}
+```
+#### **4) クーポンを削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/admin/coupons/{couponUuid}`
+---
+
+
+### 4.3. **クーポン機能（ユーザー）**
+
+#### **1) ユーザーがクーポンを受け取る**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/coupons/{couponUuid}`
+
+
+#### **2) クーポンの情報**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/coupons/{userCouponUuid} `
+
+
+#### **2) クーポンのリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/coupons/me `
+
+
+#### **4) クーポンを削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/coupons/{userCouponUuid}`
 
 ---
 

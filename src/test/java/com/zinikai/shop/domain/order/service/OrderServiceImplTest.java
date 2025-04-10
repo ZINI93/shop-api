@@ -86,7 +86,8 @@ class OrderServiceImplTest {
                 "PayPay",
                 UUID.randomUUID().toString(),
                 address,
-                product.getOwnerUuid()
+                product.getOwnerUuid(),
+                new BigDecimal(100)
         );
         setOrdersId(orders, 1L);
 

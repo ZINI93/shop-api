@@ -1,5 +1,8 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.coupon.entity.UserCoupon;
+import com.zinikai.shop.domain.coupon.repository.UserCouponRepository;
+import com.zinikai.shop.domain.coupon.service.UserCouponService;
 import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.OrderItem;
@@ -45,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
                 .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
+
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new IllegalArgumentException("Payment is already confirmed");

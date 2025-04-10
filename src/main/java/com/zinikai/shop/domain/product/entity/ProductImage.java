@@ -12,9 +12,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Entity
+
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "product_images")
+@Entity
 public class ProductImage extends TimeStamp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
