@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> {
 
     Optional<CouponUsage> findByMemberUuidUsedAndCouponUsageUuid(String memberUuid, String couponUsageUuid);
+
 }

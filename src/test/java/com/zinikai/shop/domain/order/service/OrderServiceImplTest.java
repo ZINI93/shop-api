@@ -2,6 +2,7 @@ package com.zinikai.shop.domain.order.service;
 
 import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.adress.repository.AddressRepository;
+import com.zinikai.shop.domain.coupon.entity.UserCoupon;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
@@ -55,6 +56,7 @@ class OrderServiceImplTest {
     Member member;
     Product product;
     OrderItem orderItem;
+    UserCoupon userCoupon;
 
     private void setMemberId(Member member, Long id) throws Exception {
         Field field = member.getClass().getDeclaredField("id");
@@ -75,6 +77,7 @@ class OrderServiceImplTest {
         setMemberId(member, 1L);
 
         address = Address.builder().member(Member.builder().memberUuid(member.getMemberUuid()).build()).build();
+        userCoupon = UserCoupon.builder().userCouponUuid(UUID.randomUUID().toString()).build();
 
         product = Product.builder().ownerUuid(UUID.randomUUID().toString()).price(new BigDecimal(1000)).build();
         orderItem = OrderItem.builder().product(product).ownerUuid(member.getMemberUuid()).build();
@@ -92,7 +95,9 @@ class OrderServiceImplTest {
         setOrdersId(orders, 1L);
 
         ordersRequest = new OrdersRequestDto(
-                orders.getPaymentMethod()
+                orders.getPaymentMethod(),
+                userCoupon.getUserCouponUuid()
+
         );
     }
 

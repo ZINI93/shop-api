@@ -203,3 +203,32 @@ create TABLE `coupon_usages` (
     CONSTRAINT `fk_coupon_usage_orders` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE
 );
 
+create TABLE `categories` (
+    `category_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `category_uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `owner_uuid` VARCHAR(36) NOT NULL,
+    `name` VARCHAR(36) NOT NULL UNIQUE,
+    `slug` VARCHAR(36) NOT NULL UNIQUE,
+    `parent_id` BIGINT DEFAULT NULL,
+    `is_active` Boolean NOT NULL DEFAULT TRUE,
+    `sort_order` INT NOT NULL,
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_category_category` FOREIGN KEY (`parent_id`) REFERENCES `categories`(`category_id`) ON delete CASCADE
+);
+
+create TABLE `product_category` (
+    `product_category_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `category_id` BIGINT NOT NULL,
+    `product_id` BIGINT NOT NULL,
+    `product_category_uuid` VARCHAR(36) NOT NULL UNIQUE,
+
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_product_category_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`category_id`) ON delete CASCADE,
+    CONSTRAINT `fk_product_category_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`product_id`) ON delete CASCADE
+);
+

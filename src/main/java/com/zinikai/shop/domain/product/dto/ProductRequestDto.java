@@ -32,9 +32,12 @@ public class ProductRequestDto {
 
     private String productMaker;
 
+    private String categoryUuid;
+
     private List<ProductImageResponseDto> productImages;
+
     @Builder
-    public ProductRequestDto(String name, BigDecimal price, String description, Integer stock, ProductCondition productCondition, String productMaker,List<ProductImageResponseDto> productImages) {
+    public ProductRequestDto(String name, BigDecimal price, String description, Integer stock, ProductCondition productCondition, String productMaker,List<ProductImageResponseDto> productImages , String categoryUuid) {
         this.name = name;
         this.price = price;
         this.description = description;
@@ -42,5 +45,7 @@ public class ProductRequestDto {
         this.productCondition = productCondition;
         this.productMaker = productMaker;
         this.productImages = productImages;
+        this.categoryUuid = categoryUuid;
+
     }
 }

@@ -16,6 +16,7 @@ import java.util.UUID;
 @Table(name = "products")
 @Entity
 public class Product extends TimeStamp {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id", nullable = false)

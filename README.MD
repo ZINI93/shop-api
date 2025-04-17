@@ -296,6 +296,7 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
   "stock" : 50,
   "productCondition" : "NEW",
   "productMaker" : "apple",
+  "categoryUuid" : "5df4a242-82c9-4cf1-8210-58b0faf31e2e",
   "productImages" : [
     {
       "imageUrl": "www.image.com"
@@ -513,6 +514,64 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 #### **4) クーポンを削除**
 - **HTTPメソッド:** `DELETE`
 - **URL:** `/api/coupons/{userCouponUuid}`
+
+---
+
+### 4.4. **カテゴリ機能(管理者)**
+
+#### **1) カテゴリー作成**
+- **HTTPメソッド:** `POST`
+- **URL:** `/api/admin/categories`
+
+`ex)
+[電子] (parentUuid = null, sortOrder=1)
+├── [スマホ📱] (parentUuid = 電子, sortOrder=1)
+└── [パソコン💻]   (parentUuid = 電子, sortOrder=2)`
+
+**リクエスト本文:**
+```json
+{
+  "name": "パソコン",
+  "slug": "computer",
+  "parentUuid": null,
+  "sortOrder": 1
+}
+
+```
+
+#### **2) カテゴリー修正**
+- **HTTPメソッド:** `PUT`
+- **URL:** `/api/admin/categories/(categoryUuid)`
+
+**リクエスト本文:**
+```json
+{
+  "name": "パソコン",
+  "slug": "computer",
+  "parentUuid": null,
+  "sortOrder": 1
+}
+
+```
+
+#### **3) カテゴリー情報を照会**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/admin/categories/(categoryUuid)/info`
+
+
+#### **4) 親カテゴリーのリスト照会**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/admin/categories/top`
+
+#### **2) カテゴリーのリスト照会**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/admin/categories/list`
+
+
+#### **4) カテゴリー削除**
+- **HTTPメソッド:** `DELETE`
+- **URL:** `/api/admin/categories/(categoryUuid)/delete`
+- 
 
 ---
 
