@@ -70,7 +70,6 @@ public class OrdersServiceImpl implements OrdersService {
         Address address = addressRepository.findByMemberMemberUuid(memberUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Address in Not found member UUID in the address"));
 
-
         UserCoupon userCoupon = userCouponRepository.findByMemberMemberUuidAndUserCouponUuid(memberUuid, requestDto.getUserCouponUuid())
                 .orElse(null);
 

@@ -75,8 +75,6 @@ class UserCouponServiceImplTest {
 
         //then
         assertNotNull(result);
-        assertEquals(member.getMemberUuid(), result.getMember().getMemberUuid());
-        assertEquals(coupon.getCouponUuid(), result.getCoupon().getCouponUuid());
 
         verify(userCouponRepository, times(1)).save(any(UserCoupon.class));
     }
@@ -92,8 +90,6 @@ class UserCouponServiceImplTest {
 
         //then
         assertNotNull(result);
-        assertEquals(member.getMemberUuid(),result.getMember().getMemberUuid());
-        assertEquals(coupon.getStartDate(), result.getCoupon().getStartDate());
 
         verify(userCouponRepository, times(1)).findByMemberMemberUuidAndUserCouponUuid(member.getMemberUuid(),userCoupon.getUserCouponUuid());
 

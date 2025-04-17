@@ -1,5 +1,9 @@
 package com.zinikai.shop.domain.product.service;
 
+import com.zinikai.shop.domain.category.entity.Category;
+import com.zinikai.shop.domain.category.entity.ProductCategory;
+import com.zinikai.shop.domain.category.repository.CategoryRepository;
+import com.zinikai.shop.domain.category.repository.ProductCategoryRepository;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.product.dto.ProductRequestDto;
@@ -31,6 +35,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final MemberRepository memberRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductCategoryRepository productCategoryRepository;
 
     @Override
     @Transactional
@@ -44,6 +50,13 @@ public class ProductServiceImpl implements ProductService {
         if (requestDto.getStock() == null || requestDto.getStock() <= 0) {
             throw new IllegalArgumentException("Stock must be greater than 0");
         }
+
+        int newImageCount = requestDto.getProductImages().size();
+
+        if (newImageCount > 8 || newImageCount < 1) {
+            throw new IllegalArgumentException("Picture can be registered from 1 to 8");
+        }
+
 
         Product product = Product.builder()
                 .name(requestDto.getName())
@@ -60,12 +73,6 @@ public class ProductServiceImpl implements ProductService {
 
         ProductResponseDto savedProduct = productRepository.save(product).toResponseDto();
 
-        int currentAddImageCount = productImageRepository.countByProduct(product);
-        int newImageCount = requestDto.getProductImages().size();
-
-        if (newImageCount + currentAddImageCount > 8) {
-            throw new IllegalArgumentException("Picture can be registered from 1 to 8");
-        }
         List<ProductImage> images = requestDto.getProductImages().stream()
                 .map(imagesDto -> ProductImage.builder()
                         .product(product)
@@ -75,6 +82,17 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
 
         productImageRepository.saveAll(images);
+
+        Category category = categoryRepository.findByCategoryUuid(requestDto.getCategoryUuid())
+                .orElseThrow(() -> new IllegalArgumentException("Not found Category Uuid"));
+
+        ProductCategory productCategory = ProductCategory.builder()
+                .category(category)
+                .product(product)
+                .build();
+
+        productCategoryRepository.save(productCategory);
+
 
         return savedProduct;
     }
@@ -122,6 +140,12 @@ public class ProductServiceImpl implements ProductService {
         log.info("updated product :{}", product);
 
         return product.toResponseDto();
+    }
+
+    @Override
+    public List<ProductResponseDto> searchByKeywords(String keywords) {
+
+        return List.of();
     }
 
 
