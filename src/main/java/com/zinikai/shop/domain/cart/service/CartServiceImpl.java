@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -112,6 +113,21 @@ public class CartServiceImpl implements CartService {
         matchMemberUuid(memberUuid, cart);
 
         cartRepository.delete(cart);
+    }
+
+    @Override
+    public void validateCarts(List<Cart> carts, String sellerUuid) {
+
+        if (carts.isEmpty()) {
+            throw new IllegalArgumentException("No valid cart item selected for order");
+        }
+
+        boolean isValidSeller = carts.stream()
+                .allMatch(cart -> cart.getProduct().getMember().getMemberUuid().equals(sellerUuid));
+
+        if (!isValidSeller) {
+            throw new IllegalArgumentException("All items in the order must be from the same seller.");
+        }
     }
 
     private void matchMemberUuid(String memberUuid, Cart cart) {

@@ -14,13 +14,13 @@ import java.util.Optional;
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
 
-    @Query("select d from Delivery d where (ownerUuid = :memberUuid or buyerUuid = :memberUuid) and deliveryUuid = :deliverUuid")
+    @Query("select d from Delivery d left join fetch d.member m where (m.memberUuid = :memberUuid or d.buyerUuid = :memberUuid) and d.deliveryUuid = :deliverUuid")
     Optional<Delivery> findByMemberUuidAndDeliveryUuid(@Param("memberUuid") String memberUuid, @Param("deliverUuid") String deliveryUuid);
 
     @Query("SELECT d FROM Delivery d WHERE d.deliveryStatus = :status AND d.confirmDelivery IS NULL AND d.updatedAt < :updatedAt")
     List<Delivery> findOldDeliveries(@Param("status")DeliveryStatus status, @Param("updatedAt") LocalDateTime updateAt);
 
-    Optional<Delivery> findByOwnerUuidAndDeliveryUuid(String ownerUuid, String deliveryUuid);
+    Optional<Delivery> findByMemberMemberUuidAndDeliveryUuid(String ownerUuid, String deliveryUuid);
     Optional<Delivery> findByBuyerUuidAndDeliveryUuid(String BuyerUuid, String deliveryUuid);
 
 }

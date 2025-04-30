@@ -4,6 +4,7 @@ import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.adress.entity.Address;
 import com.zinikai.shop.domain.delivery.dto.DeliveryResponseDto;
 import com.zinikai.shop.domain.delivery.dto.DeliveryUpdateDto;
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.Orders;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -44,8 +45,9 @@ public class Delivery extends TimeStamp {
     @Column(nullable = false)
     private Carrier carrier;
 
-    @Column(name = "owner_uuid", nullable = false)
-    private String ownerUuid;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Column(name = "buyer_uuid", nullable = false)
     private String buyerUuid;
@@ -57,13 +59,13 @@ public class Delivery extends TimeStamp {
     private LocalDateTime confirmDelivery;
 
     @Builder
-    public Delivery(Orders orders, Address address, DeliveryStatus deliveryStatus, String trackingNumber, Carrier carrier, String ownerUuid, String buyerUuid, String deliveryUuid) {
+    public Delivery(Orders orders, Address address, DeliveryStatus deliveryStatus, String trackingNumber, Carrier carrier, Member member, String buyerUuid, String deliveryUuid) {
         this.orders = orders;
         this.address = address;
         this.deliveryStatus = deliveryStatus;
         this.trackingNumber = trackingNumber;
         this.carrier = carrier;
-        this.ownerUuid = ownerUuid;
+        this.member = member;
         this.buyerUuid = orders.getMember() != null ? orders.getMember().getMemberUuid() : null;
         this.deliveryUuid = UUID.randomUUID().toString();
     }

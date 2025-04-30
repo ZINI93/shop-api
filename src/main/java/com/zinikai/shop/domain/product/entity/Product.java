@@ -1,9 +1,12 @@
 package com.zinikai.shop.domain.product.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
+import com.zinikai.shop.domain.product.exception.OutOfStockException;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -48,11 +51,12 @@ public class Product extends TimeStamp {
     @Column(name = "product_uuid", nullable = false, updatable = false, unique = true)
     private String productUuid;
 
-    @Column(name = "owner_uuid", nullable = false, updatable = false)
-    private String ownerUuid;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false, updatable = false)
+    private Member member;
 
     @Builder
-    public Product(String name, BigDecimal price, String description, Integer stock, ProductStatus productStatus, ProductCondition productCondition, String productMaker, String productUuid, String ownerUuid) {
+    public Product(String name, BigDecimal price, String description, Integer stock, ProductStatus productStatus, ProductCondition productCondition, String productMaker, String productUuid, Member member) {
         this.name = name;
         this.price = price;
         this.description = description;
@@ -61,7 +65,7 @@ public class Product extends TimeStamp {
         this.productCondition = productCondition;
         this.productMaker = productMaker;
         this.productUuid = UUID.randomUUID().toString();
-        this.ownerUuid = ownerUuid;
+        this.member = member;
     }
 
 
@@ -88,14 +92,14 @@ public class Product extends TimeStamp {
 
     public void decreaseStock(int quantity) {
         if (this.stock < quantity) {
-            throw new IllegalStateException("Stock shortage: " + this.name);
+            throw new OutOfStockException("request quantity" + quantity + "remaining stock" + this.stock);
         }
         this.stock -= quantity;
     }
 
     public void refundStock(int quantity) {
         if (quantity < 1) {
-            throw new IllegalArgumentException("Refund quantity must be at least 1");
+            throw new OutOfStockException("Refund quantity must be at least 1");
         }
         this.stock += quantity;
     }

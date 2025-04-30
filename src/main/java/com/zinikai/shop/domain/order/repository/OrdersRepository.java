@@ -1,9 +1,7 @@
 package com.zinikai.shop.domain.order.repository;
 
-import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
-import org.hibernate.query.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,4 +36,11 @@ public interface OrdersRepository extends JpaRepository<Orders, Long>, OrdersRep
             @Param("newStatus") Status newStatus,
             @Param("expirationTime") LocalDateTime expirationTime
     );
+
+
+    @Query("SELECT o FROM Orders o WHERE o.status = :status AND o.createdAt <= :expirationTime")
+    List<Orders> findExpiredPendingOrders(@Param("status") Status orderStatus,@Param("expirationTime")  LocalDateTime expirationTime);
+
+
+    Page<Orders> findByStatusAndCreatedAtBefore(Status status, LocalDateTime time, Pageable pageable);
 }

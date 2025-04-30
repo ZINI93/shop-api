@@ -1,8 +1,5 @@
 package com.zinikai.shop.domain.payment.service;
 
-import com.zinikai.shop.domain.coupon.entity.UserCoupon;
-import com.zinikai.shop.domain.coupon.repository.UserCouponRepository;
-import com.zinikai.shop.domain.coupon.service.UserCouponService;
 import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.OrderItem;
@@ -40,7 +37,25 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final MailService mailService;
 
-    @Override @Transactional
+    @Override
+    public PaymentResponseDto createPayment(Member member, Orders orders) {
+
+        log.info("Creating payment for member:{}, order:{}", member.getMemberUuid(), orders.getOrderUuid());
+
+        Payment savedPayment = Payment.builder()
+                .orders(orders)
+                .status(PaymentStatus.PENDING)
+                .paymentMethod(orders.getPaymentMethod())
+                .ownerUuid(member.getMemberUuid())
+                .build();
+
+        log.info("Created payment Uuid:{}", savedPayment.getPaymentUuid());
+
+        return paymentRepository.save(savedPayment).toResponse();
+    }
+
+    @Override
+    @Transactional
     public PaymentResponseDto confirmPayment(String ownerUuid, String paymentUuid) {
 
         Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
@@ -49,36 +64,22 @@ public class PaymentServiceImpl implements PaymentService {
         Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
                 .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
 
-
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new IllegalArgumentException("Payment is already confirmed");
         }
 
-        if (order.getStatus() != Status.PENDING) {
+        if (order.getStatus() != Status.ORDER_PENDING) {
             throw new IllegalArgumentException("Order is already confirmed");
         }
 
         BigDecimal totalAmount = order.getTotalAmount();
         Member member = order.getMember();
-        if (member.getBalance().compareTo(totalAmount) < 0){
+        if (member.getBalance().compareTo(totalAmount) < 0) {
             throw new IllegalArgumentException("Insufficient balance");
         }
 
-            payment.paymentStatus(PaymentStatus.COMPLETED);
-            order.ordersStatus(Status.COMPLETED);
-
-        List<OrderItem> orderItems = orderItemRepository.findByOrders(order);
-        for (OrderItem orderItem : orderItems) {
-            Product product = orderItem.getProduct();
-            if (product.getStock() < orderItem.getQuantity()) {
-                throw new IllegalArgumentException("Stock shortage! product name: " + product.getName());
-            }
-        }
-
-        for (OrderItem orderItem : orderItems) {
-            Product product = orderItem.getProduct();
-            product.decreaseStock(orderItem.getQuantity());
-        }
+        payment.paymentStatus(PaymentStatus.COMPLETED);
+        order.orderUpdateStatus(Status.ORDER_COMPLETED);
 
         BigDecimal totalPrice = order.getTotalAmount();
 
@@ -95,7 +96,8 @@ public class PaymentServiceImpl implements PaymentService {
         return payment.toResponse();
     }
 
-    @Override @Transactional
+    @Override
+    @Transactional
     public PaymentResponseDto cancelPayment(String ownerUuid, String paymentUuid) {
 
         log.info("Canceling payment: ownerUuid={}, paymentUuid={}", ownerUuid, paymentUuid);
@@ -110,12 +112,12 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("Payment is already confirmed");
         }
 
-        if (order.getStatus() != Status.PENDING) {
+        if (order.getStatus() != Status.ORDER_PENDING) {
             throw new IllegalArgumentException("Order is already confirmed");
         }
 
         payment.paymentStatus(PaymentStatus.FAILED);
-        order.ordersStatus(Status.CANCELLED);
+        order.orderUpdateStatus(Status.ORDER_CANCELLED);
 
         log.info("Payment and order canceled: paymentUuid={}, orderUuid={}", paymentUuid, order.getOrderUuid());
 
@@ -183,7 +185,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
 
             if (updateDto.getStatus() == PaymentStatus.COMPLETED) {
-                orders.ordersStatus(Status.COMPLETED);
+                orders.orderUpdateStatus(Status.ORDER_COMPLETED);
             }
         }
 
@@ -222,6 +224,13 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Failed {} expired orders", updateCount);
 
+    }
+
+    @Override
+    public void validatePaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isEmpty()) {
+            throw new IllegalArgumentException("Please choose the payment method");
+        }
     }
 
     private static void matchOwnerUuid(String ownerUuid, Payment payment) {

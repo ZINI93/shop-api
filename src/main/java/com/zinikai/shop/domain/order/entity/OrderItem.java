@@ -31,6 +31,7 @@ public class OrderItem extends TimeStamp {
     @JoinColumn(name = "product_id")
     private Product product;
 
+
     @Column(nullable = false)
     private Integer quantity;
 
@@ -58,7 +59,7 @@ public class OrderItem extends TimeStamp {
         this.price = (price != null) ? price : product.getPrice();
         this.ownerUuid = ownerUuid;
         this.orderItemUuid = UUID.randomUUID().toString();
-        this.sellerUuid = product.getOwnerUuid();
+        this.sellerUuid = product.getMember().getMemberUuid();
     }
 
     public OrderItemResponseDto toResponseDto() {

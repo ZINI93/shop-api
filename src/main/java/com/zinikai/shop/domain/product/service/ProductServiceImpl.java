@@ -12,6 +12,10 @@ import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.entity.ProductStatus;
+import com.zinikai.shop.domain.product.exception.InvalidSellerException;
+import com.zinikai.shop.domain.product.exception.ProductNotFoundException;
+import com.zinikai.shop.domain.product.exception.ProductOwnerNotMatchException;
+import com.zinikai.shop.domain.product.exception.ProductStatusNotMatchException;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +61,6 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Picture can be registered from 1 to 8");
         }
 
-
         Product product = Product.builder()
                 .name(requestDto.getName())
                 .price(requestDto.getPrice())
@@ -66,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
                 .productStatus(ProductStatus.ON_SALE)
                 .productCondition(requestDto.getProductCondition())
                 .productMaker(requestDto.getProductMaker())
-                .ownerUuid(member.getMemberUuid())
+                .member(member)
                 .build();
 
         log.info("created product: {}", product);
@@ -77,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
                 .map(imagesDto -> ProductImage.builder()
                         .product(product)
                         .imageUrl(imagesDto.getImageUrl())
-                        .ownerUuid(product.getOwnerUuid())
+                        .ownerUuid(product.getMember().getMemberUuid())
                         .build())
                 .collect(Collectors.toList());
 
@@ -108,10 +111,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto getProduct(String ownerUuid, String productUuid) {
-        Product product = productRepository.findByOwnerUuidAndProductUuid(ownerUuid, productUuid)
+        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or product UUID"));
 
-        if (!Objects.equals(product.getOwnerUuid(), ownerUuid)) {
+        if (!Objects.equals(product.getMember().getMemberUuid(), ownerUuid)) {
             throw new IllegalArgumentException("Product not match for owner UUID");
         }
 
@@ -125,7 +128,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Updating product for member UUID :{}, product UUID :{} ", ownerUuid, productUuid);
 
-        Product product = productRepository.findByOwnerUuidAndProductUuid(ownerUuid, productUuid)
+        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or product UUID"));
 
         matchOwnerUuidAndProductUuid(ownerUuid, productUuid, product);
@@ -155,7 +158,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Deleting product for member UUID: {}, product UUID: {}", ownerUuid, productUuid);
 
-        Product product = productRepository.findByOwnerUuidAndProductUuid(ownerUuid, productUuid)
+        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found Owner UUID or Product UUID"));
 
         matchOwnerUuidAndProductUuid(ownerUuid, productUuid, product);
@@ -163,12 +166,29 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
 
+    @Override
+    public void validateProduct(List<Product> products, String sellerUuid) {
+
+        if (products.isEmpty()) {
+            throw new ProductNotFoundException("No valid products found for the given IDs");
+        }
+        products.forEach(product -> {
+                    if (product.getProductStatus() == ProductStatus.SOLD_OUT) {
+                        throw new ProductStatusNotMatchException("Item is SOLD_OUT");
+                    }
+                    if (!product.getMember().getMemberUuid().equals(sellerUuid)) {
+                        throw new InvalidSellerException("All items in the order must be from the same seller.");
+                    }
+                }
+        );
+    }
+
     private static void matchOwnerUuidAndProductUuid(String ownerUuid, String productUuid, Product product) {
-        if (!Objects.equals(product.getOwnerUuid(), ownerUuid)) {
-            throw new IllegalArgumentException("Owner UUID does not match the product owner");
+        if (!Objects.equals(product.getMember().getMemberUuid(), ownerUuid)) {
+            throw new ProductOwnerNotMatchException("Owner UUID does not match the product owner");
         }
         if (!Objects.equals(product.getProductUuid(), productUuid)) {
-            throw new IllegalArgumentException("Product UUID does not match");
+            throw new ProductOwnerNotMatchException("Product UUID does not match");
         }
     }
 }

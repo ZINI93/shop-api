@@ -1,11 +1,12 @@
 package com.zinikai.shop.domain.order.service;
 
 import com.zinikai.shop.domain.member.entity.Member;
-import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.dto.OrderItemRequestDto;
 import com.zinikai.shop.domain.order.dto.OrderItemResponseDto;
+import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
+import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
@@ -16,7 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,17 +32,13 @@ public class OrderItemServiceImpl implements OrderItemService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
 
-
     @Override
     @Transactional
-    public void createAndSaveOrderItem(Member member, OrderItemRequestDto itemDto, Orders orders) {
+    public OrderItem createAndSaveOrderItem(Member member, OrderItemRequestDto itemDto, Orders orders, Product product) {
 
         log.info("Creating orderItem for member email:{}", member.getEmail());
 
-        Product product = productRepository.findByProductUuid(itemDto.getProductUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found product id"));
-
-        OrderItem orderItem = OrderItem.builder()
+        return OrderItem.builder()
                 .orders(orders)
                 .product(product)
                 .quantity(itemDto.getQuantity())
@@ -45,9 +46,6 @@ public class OrderItemServiceImpl implements OrderItemService {
                 .ownerUuid(member.getMemberUuid())
                 .build();
 
-        log.info("Created orderItems:{}", orderItem);
-
-        orderItemRepository.save(orderItem);
     }
 
     @Override
@@ -76,10 +74,35 @@ public class OrderItemServiceImpl implements OrderItemService {
     @Override
     public Page<OrderItemResponseDto> getSalesHistory(String ownerUuid, Pageable pageable) {
 
-        Page<OrderItem> salesProducts = orderItemRepository.findByProductOwnerUuid(ownerUuid, pageable);
+        Page<OrderItem> salesProducts = orderItemRepository.findByProductMemberMemberUuid(ownerUuid, pageable);
 
         return salesProducts.map(OrderItem::toResponseDto);
+    }
 
+    @Override
+    public void refundStockByOrder(Orders order) {
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrders(order);
+
+        orderItems.forEach(orderItem -> {
+            Product product = orderItem.getProduct();
+            product.refundStock(orderItem.getQuantity());
+        });
+
+    }
+
+    @Override
+    public void decreaseStockByOrderItem(OrdersRequestDto requestDto) {
+
+        List<String> productUuids = requestDto.getOrderItems().stream().map(OrderItemRequestDto::getProductUuid).collect(Collectors.toList());
+
+        Map<String, Product> productMap = productRepository.findAllByProductUuidIn(productUuids).stream().collect(Collectors.toMap(Product::getProductUuid, Function.identity()));
+
+        requestDto.getOrderItems().forEach(orderItem -> {
+            String productUuid = orderItem.getProductUuid();
+            Product product = productMap.get(productUuid);
+            product.decreaseStock(orderItem.getQuantity());
+        });
     }
 
     private void matchMemberUuid(String memberUuid, OrderItem orderItem) {

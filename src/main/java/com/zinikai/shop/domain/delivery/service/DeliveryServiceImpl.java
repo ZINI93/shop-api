@@ -42,7 +42,10 @@ public class DeliveryServiceImpl implements DeliveryService {
         Orders orders = ordersRepository.findByOrderUuid(requestDto.getOrderUuid())
                 .orElseThrow(() -> new IllegalArgumentException("Not found Order UUID"));
 
-        if (orders.getStatus() != Status.COMPLETED) {
+        Member member = memberRepository.findByMemberUuid(ownerUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Not found Member Uuid"));
+
+        if (orders.getStatus() != Status.ORDER_COMPLETED) {
             throw new IllegalArgumentException("Cannot create delivery for an order that is not completed.");
         }
 
@@ -52,7 +55,7 @@ public class DeliveryServiceImpl implements DeliveryService {
                 .deliveryStatus(DeliveryStatus.PENDING)
                 .trackingNumber(requestDto.getTrackingNumber())
                 .carrier(requestDto.getCarrier())
-                .ownerUuid(ownerUuid)
+                .member(member) // 배송을 의뢰하는 판매자 정보
                 .build();
 
         log.info("Created delivery :{}", delivery);
@@ -64,7 +67,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional
     public DeliveryResponseDto shippedDelivery(String ownerUuid, String deliveryUuid) {
 
-        Delivery delivery = deliveryRepository.findByOwnerUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
+        Delivery delivery = deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
                 .orElseThrow(() -> new IllegalArgumentException("owner UUID not found for owner UUID: " + ownerUuid + ", delivery UUID: " + deliveryUuid));
 
         if (delivery.getDeliveryStatus() != DeliveryStatus.PENDING) {
@@ -92,7 +95,7 @@ public class DeliveryServiceImpl implements DeliveryService {
 
         log.info("Updating delivery for owner UUID :{}, delivery UUID:{}", ownerUuid, deliveryUuid);
 
-        Delivery delivery = deliveryRepository.findByOwnerUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
+        Delivery delivery = deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or delivery UUID"));
 
         if (delivery.getDeliveryStatus() != DeliveryStatus.PENDING) {

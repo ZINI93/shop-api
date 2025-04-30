@@ -8,8 +8,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 
@@ -46,9 +44,6 @@ public class Orders extends TimeStamp {
     @Column(name = "seller_uuid", nullable = false, updatable = false)
     private String sellerUuid;
 
-    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems = new ArrayList<>();
-
     @Column(name = "discount_amount")
     private BigDecimal discountAmount;
 
@@ -79,12 +74,14 @@ public class Orders extends TimeStamp {
         this.status = status;
         this.paymentMethod = paymentMethod;
     }
-    public void ordersStatus(Status status) {
+    public void orderUpdateStatus(Status status) {
         this.status = status;
     }
+    public void isCancellable(Orders orders){
+        if (orders.getStatus() != com.zinikai.shop.domain.order.entity.Status.ORDER_PENDING) {
+            throw new IllegalArgumentException("Order is already confirmed");
+        }
 
-    public void addOrderItem(OrderItem orderItem) {
-        orderItems.add(orderItem);
-        orderItem.setOrders(this);
     }
+
 }
