@@ -1,8 +1,11 @@
 package com.zinikai.shop.domain.order.service;
 
+import com.zinikai.shop.domain.adress.entity.Address;
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.dto.OrdersRequestDto;
 import com.zinikai.shop.domain.order.dto.OrdersResponseDto;
 import com.zinikai.shop.domain.order.dto.OrdersUpdateDto;
+import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +16,11 @@ import java.util.List;
 
 public interface OrdersService {
 
-    OrdersResponseDto createOrder(String memberUuid, OrdersRequestDto requestDto);
+    Orders createOrder(Member member, BigDecimal finalAmount, OrdersRequestDto requestDto, String sellerUuid, Address address, BigDecimal discountAmount);
 
-    OrdersResponseDto createOrderFromCart(String memberUuid, OrdersRequestDto requestDto);
+    OrdersResponseDto orderProcess(String memberUuid, OrdersRequestDto requestDto);
+
+    OrdersResponseDto orderProcessFromCart(String memberUuid, OrdersRequestDto requestDto);
 
     OrdersResponseDto getOrder(String memberUuid, String ordersUuid);
 
@@ -25,5 +30,5 @@ public interface OrdersService {
 
     void deleteOrder(String memberUuid, String orderUuid);
 
-    void AutoPendingOrders();
+    void autoCancelPendingOrders();
 }

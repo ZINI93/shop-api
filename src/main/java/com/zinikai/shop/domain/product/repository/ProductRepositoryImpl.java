@@ -61,7 +61,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         if (ownerUuid == null || ownerUuid.isEmpty()) {
             return null;
         }
-        return product.ownerUuid.eq(ownerUuid);
+        return product.member.memberUuid.eq(ownerUuid);
     }
 
     //　価格範囲設定

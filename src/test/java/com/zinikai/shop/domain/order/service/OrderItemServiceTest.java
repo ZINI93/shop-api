@@ -98,7 +98,7 @@ class OrderItemServiceTest {
                 new BigDecimal("2000.00"),
                 member.getMemberUuid(),
                 UUID.randomUUID().toString(),
-                product.getOwnerUuid());
+                product.getMember().getMemberUuid());
 
 
     }

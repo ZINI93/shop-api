@@ -24,4 +24,6 @@ public interface ProductService {
     List<ProductResponseDto> searchByKeywords(String keywords);
 
     void deleteProduct(String ownerUuid,String productUuid);
+
+    void validateProduct(List<Product> products, String sellerUuid);
 }

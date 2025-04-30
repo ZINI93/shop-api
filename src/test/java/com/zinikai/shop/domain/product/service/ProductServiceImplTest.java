@@ -28,7 +28,6 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -94,7 +93,7 @@ class ProductServiceImplTest {
                 requestDto.getProductCondition(),
                 requestDto.getProductMaker(),
                 product.getProductUuid(),
-                member.getMemberUuid()
+                product.getMember()
         );
 
 
@@ -154,7 +153,7 @@ class ProductServiceImplTest {
 
         ProductUpdateDto updateProduct = new ProductUpdateDto("momoka", new BigDecimal(3000), "masita kakao", 20);
 
-        when(productRepository.findByOwnerUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid())).thenReturn(Optional.of(product));
+        when(productRepository.findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid())).thenReturn(Optional.of(product));
 
         //when
         ProductResponseDto updatedProduct = productService.updateProduct(member.getMemberUuid(),product.getProductUuid(),updateProduct);
@@ -164,7 +163,7 @@ class ProductServiceImplTest {
         assertNotNull(updatedProduct);
         assertEquals("momoka", updatedProduct.getName());
         assertEquals( new BigDecimal(3000), updatedProduct.getPrice());
-        verify(productRepository, times(1)).findByOwnerUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
+        verify(productRepository, times(1)).findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
 
     }
 
@@ -172,13 +171,13 @@ class ProductServiceImplTest {
     @DisplayName("商品を削除")
     void deleteProduct() {
         //given
-        when(productRepository.findByOwnerUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid())).thenReturn(Optional.of(product));
+        when(productRepository.findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid())).thenReturn(Optional.of(product));
 
         //when
         productService.deleteProduct(member.getMemberUuid(),product.getProductUuid());
 
         //then
-        verify(productRepository, times(1)).findByOwnerUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
+        verify(productRepository, times(1)).findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
 
     }
 }

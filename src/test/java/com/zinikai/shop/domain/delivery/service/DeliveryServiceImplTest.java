@@ -76,7 +76,7 @@ class DeliveryServiceImplTest {
                 DeliveryStatus.PENDING,
                 requestDto.getTrackingNumber(),
                 requestDto.getCarrier(),
-                member.getMemberUuid(),
+                delivery.getMember(),
                 orders.getMember().getMemberUuid(),
                 UUID.randomUUID().toString()
         );

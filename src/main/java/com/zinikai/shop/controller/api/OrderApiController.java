@@ -32,7 +32,7 @@ public class OrderApiController {
 
         String memberUuid = getMemberUuid(authentication);
 
-        OrdersResponseDto order = orderService.createOrder(memberUuid, requestDto);
+        OrdersResponseDto order = orderService.orderProcess(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{orderUuid}")
@@ -48,7 +48,7 @@ public class OrderApiController {
 
         String memberUuid = getMemberUuid(authentication);
 
-        OrdersResponseDto order = orderService.createOrderFromCart(memberUuid, requestDto);
+        OrdersResponseDto order = orderService.orderProcessFromCart(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{orderUuid}")
