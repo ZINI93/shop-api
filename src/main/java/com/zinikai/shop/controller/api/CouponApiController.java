@@ -35,7 +35,7 @@ public class CouponApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        CouponResponseDto coupon = couponService.createCoupon(memberUuid, requestDto);
+        CouponResponseDto coupon = couponService.createCouponWithValidate(memberUuid, requestDto);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.payment.service;
 
+import com.zinikai.shop.domain.category.service.ProductCategoryServiceImpl;
 import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
@@ -76,7 +77,7 @@ class PaymentServiceImplTest {
         member = Member.builder().email("1234@naver.com").name("zini").memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member, 1L);
 
-        orders = Orders.builder().member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.PENDING).orderUuid(UUID.randomUUID().toString()).build();
+        orders = Orders.builder().member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.ORDER_PENDING).orderUuid(UUID.randomUUID().toString()).build();
         setOrdersId(orders, 1L);
 
         requestDto = new PaymentRequestDto(

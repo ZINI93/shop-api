@@ -8,11 +8,14 @@ import lombok.Data;
 @Data
 public class ProductImageUpdateDto {
 
+    private String ImageUuid;
+
     @NotBlank(message = "イメージのURLを入力してください")
     private String imageUrl;
 
     @Builder
-    public ProductImageUpdateDto(String imageUrl) {
+    public ProductImageUpdateDto(String imageUuid, String imageUrl) {
+        ImageUuid = imageUuid;
         this.imageUrl = imageUrl;
     }
 }

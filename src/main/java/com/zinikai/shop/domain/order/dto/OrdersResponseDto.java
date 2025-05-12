@@ -1,7 +1,6 @@
 package com.zinikai.shop.domain.order.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
-import com.zinikai.shop.domain.coupon.entity.UserCoupon;
 import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import lombok.Builder;

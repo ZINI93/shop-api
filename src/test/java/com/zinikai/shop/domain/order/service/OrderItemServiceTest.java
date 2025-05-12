@@ -110,7 +110,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(orderItem);
 
         //when
-        orderItemService.createAndSaveOrderItem(member, orderItemRequestDto, orders);
+        orderItemService.createAndSaveOrderItem(member, orderItemRequestDto, orders, product);
 
         //then
         verify(orderItemRepository, times(1)).save(any(OrderItem.class));

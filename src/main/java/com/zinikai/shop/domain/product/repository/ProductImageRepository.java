@@ -28,12 +28,16 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
             @Param("productImageUuid") String productImageUuid
     );
 
-    List<ProductImage> findAllByProductProductUuid(String productUuid);
+    @Query("select pi from ProductImage pi join fetch pi.product p where p.productUuid = :productUuid")
+    List<ProductImage> findAllByProductProductUuid(@Param("productUuid") String productUuid);
+
     Optional<ProductImage> findByProductProductUuid(String productUuid);
     Page<ProductImageResponseDto> findAllByOwnerUuid(String ownerUuid, Pageable pageable);
     int countByProduct(Product product);
 
     @Query("select pi from ProductImage pi left join fetch pi.product p where p.productUuid = :productUuid")
     List<ProductImage> findProductImagesByProductUuid(@Param("productUuid")String productUuid);
+
+    ProductImageResponseDto deleteByProduct(Product product);
 
 }

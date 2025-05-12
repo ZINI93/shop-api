@@ -1,5 +1,6 @@
 package com.zinikai.shop.domain.product.service;
 
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
@@ -13,15 +14,14 @@ import java.util.List;
 
 public interface ProductService {
 
-    ProductResponseDto createProduct(String memberUuid, ProductRequestDto productRequestDto);
+
+    ProductResponseDto createProductProcess(String memberUuid, ProductRequestDto requestDto);
 
     Page<ProductResponseDto>  searchProducts(String ownerUuid,String keyword, BigDecimal minPrice, BigDecimal maxPrice, String sortField, Pageable pageable);
 
-    ProductResponseDto getProduct(String ownerUuid,String productUuid);
+    ProductResponseDto getProduct(String productUuid);
 
     ProductResponseDto updateProduct(String ownerUuid, String productUuid, ProductUpdateDto updateDto);
-
-    List<ProductResponseDto> searchByKeywords(String keywords);
 
     void deleteProduct(String ownerUuid,String productUuid);
 

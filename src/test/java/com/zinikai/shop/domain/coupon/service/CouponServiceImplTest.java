@@ -117,7 +117,7 @@ class CouponServiceImplTest {
     void getCouponInfo() {
         //given
 
-        when(couponRepository.findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
+        when(couponRepository.findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
 
         //when
         CouponResponseDto result = couponService.getCouponInfo(member.getMemberUuid(), coupon.getCouponUuid());
@@ -126,14 +126,14 @@ class CouponServiceImplTest {
         assertNotNull(result);
         assertEquals(coupon.getName(),result.getName());
 
-        verify(couponRepository,times(1)).findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
+        verify(couponRepository,times(1)).findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
 
     }
 
     @Test
     void updateCoupon() {
         //given
-        when(couponRepository.findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
+        when(couponRepository.findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
         CouponUpdateDto updateDto = new CouponUpdateDto(LocalDateTime.now(),LocalDateTime.now().plusDays(5),new BigDecimal("1000.00"),
                 new BigDecimal("1000.00"),DiscountType.FIXED_AMOUNT,"zini-shop",3);
 
@@ -147,18 +147,18 @@ class CouponServiceImplTest {
         assertEquals(updateDto.getStartDate(),result.getStartDate());
         assertEquals(updateDto.getEndDate(),result.getEndDate());
 
-        verify(couponRepository, times(1)).findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
+        verify(couponRepository, times(1)).findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
     }
 
     @Test
     void deleteCoupon() {
         //given
-        when(couponRepository.findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
+        when(couponRepository.findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
 
         //when
         couponService.deleteCoupon(member.getMemberUuid(),coupon.getCouponUuid());
 
         //then
-        verify(couponRepository, times(1)).findByOwnerUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
+        verify(couponRepository, times(1)).findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid());
     }
 }

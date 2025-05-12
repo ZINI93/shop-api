@@ -2,6 +2,7 @@ package com.zinikai.shop.domain.coupon.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.coupon.dto.CouponResponseDto;
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,9 +28,14 @@ public class Coupon extends TimeStamp {
 
     @Column(name = "coupon_uuid", updatable = false, nullable = false, unique = true)
     private String couponUuid;
+//
+//    @Column(name = "owner_uuid", updatable = false, nullable = false)
+//    private String ownerUuid;
 
-    @Column(name = "owner_uuid", updatable = false, nullable = false)
-    private String ownerUuid;
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false, updatable = false)
+    private Member member;
+
 
     @Column(nullable = false)
     private String name;
@@ -58,9 +64,9 @@ public class Coupon extends TimeStamp {
 
 
     @Builder
-    public Coupon(String couponUuid, String ownerUuid, String name, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minOrderAmount, BigDecimal discountValue, DiscountType discountType, String description, Integer maxUsage) {
+    public Coupon(String couponUuid, Member member, String name, LocalDateTime startDate, LocalDateTime endDate, BigDecimal minOrderAmount, BigDecimal discountValue, DiscountType discountType, String description, Integer maxUsage) {
         this.couponUuid = UUID.randomUUID().toString();
-        this.ownerUuid = ownerUuid;
+        this.member = member;
         this.name = name;
         this.startDate = startDate;
         this.endDate = endDate;

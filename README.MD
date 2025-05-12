@@ -290,13 +290,13 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 **リクエスト本文:**
 ```json
 {
-  "name": "おしゃれカーテン",
-  "price": 2000.00,
-  "description": "キラキラカーテン",
+  "name": "iphone16",
+  "price": 100000.00,
+  "description": "iphone16",
   "stock" : 50,
   "productCondition" : "NEW",
   "productMaker" : "apple",
-  "categoryUuid" : "5df4a242-82c9-4cf1-8210-58b0faf31e2e",
+  "categoryUuid" : "db014928-f905-4c46-a1f0-a4bec5d403c5",
   "productImages" : [
     {
       "imageUrl": "www.image.com"

@@ -1,21 +1,23 @@
 package com.zinikai.shop.domain.product.service;
 
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
 import com.zinikai.shop.domain.category.entity.Category;
 import com.zinikai.shop.domain.category.entity.ProductCategory;
+import com.zinikai.shop.domain.category.exception.CategoryNotFoundException;
 import com.zinikai.shop.domain.category.repository.CategoryRepository;
 import com.zinikai.shop.domain.category.repository.ProductCategoryRepository;
+import com.zinikai.shop.domain.category.service.ProductCategoryService;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.exception.MemberNotFoundException;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
+import com.zinikai.shop.domain.product.dto.ProductImageResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.dto.ProductUpdateDto;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductImage;
 import com.zinikai.shop.domain.product.entity.ProductStatus;
-import com.zinikai.shop.domain.product.exception.InvalidSellerException;
-import com.zinikai.shop.domain.product.exception.ProductNotFoundException;
-import com.zinikai.shop.domain.product.exception.ProductOwnerNotMatchException;
-import com.zinikai.shop.domain.product.exception.ProductStatusNotMatchException;
+import com.zinikai.shop.domain.product.exception.*;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,26 +45,12 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductCategoryRepository productCategoryRepository;
 
-    @Override
+    private final ProductCategoryService productCategoryService;
+
     @Transactional
-    public ProductResponseDto createProduct(String memberUuid, ProductRequestDto requestDto) {
+    private Product createProduct(Member member, ProductRequestDto requestDto) {
 
-        log.info("Creating product for member UUID: {}", memberUuid);
-
-        Member member = memberRepository.findByMemberUuid(memberUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found member ID"));
-
-        if (requestDto.getStock() == null || requestDto.getStock() <= 0) {
-            throw new IllegalArgumentException("Stock must be greater than 0");
-        }
-
-        int newImageCount = requestDto.getProductImages().size();
-
-        if (newImageCount > 8 || newImageCount < 1) {
-            throw new IllegalArgumentException("Picture can be registered from 1 to 8");
-        }
-
-        Product product = Product.builder()
+        return Product.builder()
                 .name(requestDto.getName())
                 .price(requestDto.getPrice())
                 .description(requestDto.getDescription())
@@ -71,33 +60,31 @@ public class ProductServiceImpl implements ProductService {
                 .productMaker(requestDto.getProductMaker())
                 .member(member)
                 .build();
+    }
+
+    @Override @Transactional
+    public ProductResponseDto createProductProcess(String memberUuid, ProductRequestDto requestDto) {
+
+        log.info("Creating product for member UUID: {}", memberUuid);
+
+        Member member = findByMember(memberUuid);
+        Category category = findbyCategory(requestDto);
+
+        validateProductImages(requestDto);
+
+        Product product = createProduct(member, requestDto);
+        product.validateStock(requestDto);
+        productRepository.save(product);
+
+        List<ProductImage> productImages = saveProductImages(memberUuid, requestDto, product);
+        List<String> imageUrls = productImages.stream().map(ProductImage::getImageUrl).collect(Collectors.toList());
+
+        ProductCategory productCategory = productCategoryService.createProductCategory(category, product);
+        productCategoryRepository.save(productCategory);
 
         log.info("created product: {}", product);
 
-        ProductResponseDto savedProduct = productRepository.save(product).toResponseDto();
-
-        List<ProductImage> images = requestDto.getProductImages().stream()
-                .map(imagesDto -> ProductImage.builder()
-                        .product(product)
-                        .imageUrl(imagesDto.getImageUrl())
-                        .ownerUuid(product.getMember().getMemberUuid())
-                        .build())
-                .collect(Collectors.toList());
-
-        productImageRepository.saveAll(images);
-
-        Category category = categoryRepository.findByCategoryUuid(requestDto.getCategoryUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found Category Uuid"));
-
-        ProductCategory productCategory = ProductCategory.builder()
-                .category(category)
-                .product(product)
-                .build();
-
-        productCategoryRepository.save(productCategory);
-
-
-        return savedProduct;
+        return product.toResponseDto(imageUrls);
     }
 
     @Override
@@ -110,28 +97,25 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public ProductResponseDto getProduct(String ownerUuid, String productUuid) {
-        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or product UUID"));
+    public ProductResponseDto getProduct(String productUuid) {
 
-        if (!Objects.equals(product.getMember().getMemberUuid(), ownerUuid)) {
-            throw new IllegalArgumentException("Product not match for owner UUID");
-        }
+        Product product = findProductByProductUuid(productUuid);
 
-        return product.toResponseDto();
+        List<ProductImage> productImages = findProductAllByProductUuid(productUuid);
+        List<String> productUuids = productImages.stream().map(ProductImage::getImageUrl).collect(Collectors.toList());
+
+        return new ProductResponseDto(product.getName(),product.getPrice(),product.getDescription(),product.getStock(),product.getProductCondition(),product.getProductMaker(),product.getProductUuid());
     }
-
 
     @Override
     @Transactional
-    public ProductResponseDto updateProduct(String ownerUuid, String productUuid, ProductUpdateDto updateDto) {
+    public ProductResponseDto updateProduct(String memberUuid, String productUuid, ProductUpdateDto updateDto) {
 
-        log.info("Updating product for member UUID :{}, product UUID :{} ", ownerUuid, productUuid);
+        log.info("Updating product for member UUID :{}, product UUID :{} ", memberUuid, productUuid);
 
-        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or product UUID"));
+        Product product = findProductByMemberUuidAndProductUuid(memberUuid, productUuid);
 
-        matchOwnerUuidAndProductUuid(ownerUuid, productUuid, product);
+        matchOwnerUuidAndProductUuid(memberUuid, productUuid, product);
 
         product.updateInfo(
                 updateDto.getName(),
@@ -140,28 +124,26 @@ public class ProductServiceImpl implements ProductService {
                 updateDto.getStock()
         );
 
-        log.info("updated product :{}", product);
+        List<ProductImage> newImages = getProductImages(updateDto, product);
+        List<String> imageUrls = newImages.stream().map(ProductImage::getImageUrl).collect(Collectors.toList());
+        validateUpdateProductImages(newImages);
+        productImageRepository.saveAll(newImages);
 
-        return product.toResponseDto();
-    }
+        log.info("Updated product Uuid:{}", product.getProductUuid());
 
-    @Override
-    public List<ProductResponseDto> searchByKeywords(String keywords) {
-
-        return List.of();
+        return product.toResponseDto(imageUrls);
     }
 
 
     @Override
     @Transactional
-    public void deleteProduct(String ownerUuid, String productUuid) {
+    public void deleteProduct(String memberUuid, String productUuid) {
 
-        log.info("Deleting product for member UUID: {}, product UUID: {}", ownerUuid, productUuid);
+        log.info("Deleting product for member UUID: {}, product UUID: {}", memberUuid, productUuid);
 
-        Product product = productRepository.findByMemberMemberUuidAndProductUuid(ownerUuid, productUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found Owner UUID or Product UUID"));
+        Product product = findProductByMemberUuidAndProductUuid(memberUuid, productUuid);
 
-        matchOwnerUuidAndProductUuid(ownerUuid, productUuid, product);
+        matchOwnerUuidAndProductUuid(memberUuid, productUuid, product);
 
         productRepository.delete(product);
     }
@@ -183,12 +165,87 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-    private static void matchOwnerUuidAndProductUuid(String ownerUuid, String productUuid, Product product) {
+    private List<ProductImage> getProductImages(ProductUpdateDto updateDto, Product product) {
+        productImageRepository.deleteByProduct(product);
+
+        if (updateDto.getImages() == null){
+            return Collections.emptyList();
+        }
+
+        return updateDto.getImages().stream()
+                .map(img ->
+                        ProductImage.builder()
+                                .product(product)
+                                .imageUrl(img.getImageUrl())
+                                .ownerUuid(product.getMember().getMemberUuid())
+                                .build()
+                ).collect(Collectors.toList());
+    }
+
+    private List<ProductImage> saveProductImages(String memberUuid, ProductRequestDto requestDto, Product product) {
+
+        List<ProductImage> images = requestDto.getProductImages().stream()
+                .map(imagesDto -> ProductImage.builder()
+                        .product(product)
+                        .imageUrl(imagesDto.getImageUrl())
+                        .ownerUuid(memberUuid)
+                        .build())
+                .collect(Collectors.toList());
+
+        return productImageRepository.saveAll(images);
+    }
+
+    private void validateProductImages(ProductRequestDto requestDto) {
+
+        int newImages = requestDto.getProductImages().size();
+
+        if (newImages > 8) {
+            throw new OutOfProductImagesException("Picture can be registered from 1 to 8");
+        }
+    }
+
+    private void validateUpdateProductImages(List<ProductImage> newImages) {
+
+        if (newImages.size() > 8) {
+            throw new OutOfProductImagesException("Picture can be registered from 1 to 8");
+        }
+    }
+
+    private void matchOwnerUuidAndProductUuid(String ownerUuid, String productUuid, Product product) {
         if (!Objects.equals(product.getMember().getMemberUuid(), ownerUuid)) {
             throw new ProductOwnerNotMatchException("Owner UUID does not match the product owner");
         }
         if (!Objects.equals(product.getProductUuid(), productUuid)) {
             throw new ProductOwnerNotMatchException("Product UUID does not match");
         }
+    }
+
+    private Category findbyCategory(ProductRequestDto requestDto) {
+        return categoryRepository.findByCategoryUuid(requestDto.getCategoryUuid())
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+    }
+
+    private Product findProductByMemberUuidAndProductUuid(String memberUuid, String productUuid) {
+        return productRepository.findByMemberMemberUuidAndProductUuid(memberUuid, productUuid)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with member UUiD:" + memberUuid + "product UUID: "+productUuid ));
+    }
+
+    private Member findByMember(String memberUuid) {
+        return memberRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> new MemberNotFoundException("Member Not found"));
+    }
+
+    private Product findProductByProductUuid(String productUuid) {
+        return productRepository.findByProductUuid(productUuid)
+                .orElseThrow(() -> new ProductNotFoundException("Product Not found"));
+    }
+
+    private List<ProductImage> findProductAllByProductUuid(String productUuid) {
+
+        if (productUuid == null){
+            return Collections.emptyList();
+        }
+        return productImageRepository.findAllByProductProductUuid(productUuid);
+
     }
 }

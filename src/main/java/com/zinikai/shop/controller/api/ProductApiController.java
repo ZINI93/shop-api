@@ -35,7 +35,7 @@ public class ProductApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        ProductResponseDto product = productService.createProduct(memberUuid, requestDto);
+        ProductResponseDto product = productService.createProductProcess(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{productUuid}")
@@ -63,13 +63,10 @@ public class ProductApiController {
 
 
     @GetMapping("{productUuid}")
-    public ResponseEntity<ProductResponseDto> getProductInfo(Authentication authentication,
-                                                             @PathVariable String productUuid){
+    public ResponseEntity<ProductResponseDto> getProductInfo(@PathVariable String productUuid){
 
-        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
-        String memberUuid = customUserDetails.getMemberUuid();
 
-        ProductResponseDto product = productService.getProduct(memberUuid, productUuid);
+        ProductResponseDto product = productService.getProduct(productUuid);
 
         return ResponseEntity.ok(product);
     }

@@ -27,12 +27,9 @@ import static org.mockito.Mockito.*;
 class AddressServiceImplTest {
 
 
-    @Mock
-    AddressRepository addressRepository;
-    @Mock
-    MemberRepository memberRepository;
-    @InjectMocks
-    AddressServiceImpl addressService;
+    @Mock AddressRepository addressRepository;
+    @Mock MemberRepository memberRepository;
+    @InjectMocks AddressServiceImpl addressService;
 
     Member member;
     Address address;
@@ -75,7 +72,7 @@ class AddressServiceImplTest {
         when(addressRepository.save(any(Address.class))).thenReturn(address);
 
         //when
-        AddressResponseDto result = addressService.createAddress(member.getMemberUuid(), requestDto);
+        AddressResponseDto result = addressService.createAddressWithValidation(member.getMemberUuid(), requestDto);
 
         //then
         assertNotNull(result);

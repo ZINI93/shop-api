@@ -157,7 +157,7 @@ create TABLE `product_images` (
 create TABLE `coupons` (
     `coupon_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `coupon_uuid` VARCHAR(36) NOT NULL,
-    `owner_uuid` VARCHAR(36) NOT NULL,
+    `member_id` BIGINT NOT NULL,
     `name` VARCHAR(36) NOT NULL,
     `start_date` DATETIME NOT NULL,
     `end_date` DATETIME NOT NULL,
@@ -170,7 +170,9 @@ create TABLE `coupons` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
-    CONSTRAINT `chk_discount_type` CHECK (`discount_type` IN ('PERCENTAGE', 'FIXED_AMOUNT'))
+    CONSTRAINT `chk_discount_type` CHECK (`discount_type` IN ('PERCENTAGE', 'FIXED_AMOUNT')),
+    CONSTRAINT `fk_coupons_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) ON delete CASCADE,
+
 );
 
 create TABLE `user_coupons` (
