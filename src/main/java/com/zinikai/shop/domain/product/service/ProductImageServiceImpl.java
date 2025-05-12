@@ -4,6 +4,8 @@ import com.zinikai.shop.domain.product.dto.*;
 import com.zinikai.shop.domain.product.entity.Product;
 import com.zinikai.shop.domain.product.entity.ProductCondition;
 import com.zinikai.shop.domain.product.entity.ProductImage;
+import com.zinikai.shop.domain.product.exception.ProductImageNotFoundException;
+import com.zinikai.shop.domain.product.exception.ProductImageNotMatchException;
 import com.zinikai.shop.domain.product.repository.ProductImageRepository;
 import com.zinikai.shop.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -34,7 +37,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         List<ProductImage> images = productImageRepository.findAllByProductProductUuid(productUuid);
 
         if (images.isEmpty()) {
-            throw new IllegalArgumentException("Not found product image");
+            return Collections.emptyList();
         }
 
         return images.stream().map(ProductImage::toResponse).collect(Collectors.toList());
@@ -55,10 +58,9 @@ public class ProductImageServiceImpl implements ProductImageService {
         log.info("Updating productImage for member UUID:{}, productImage UUID:{}", ownerUuid, productImageUuid);
 
         ProductImage productImage = productImageRepository.findByOwnerUuidAndProductImageUuid(ownerUuid, productImageUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found Owner UUID: " + ownerUuid + "ProductImage UUID:" + productImageUuid));
+                .orElseThrow(() -> new ProductImageNotFoundException("Product image not found with ownerUuid:" + ownerUuid + "productImageUuid:" + productImageUuid));
 
         matchOwnerUuid(ownerUuid, productImage);
-
 
         productImage.updateInfo(updateDto.getImageUrl());
 
@@ -92,16 +94,16 @@ public class ProductImageServiceImpl implements ProductImageService {
         log.info("deleting productImage for member UUID:{}, productImage UUID:{}", ownerUuid, productImageUuid);
 
         ProductImage productImage = productImageRepository.findByOwnerUuidAndProductImageUuid(ownerUuid, productImageUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Owner UUID does not match the productImage owner"));
+                .orElseThrow(() -> new ProductImageNotMatchException("Owner UUID does not match the productImage owner"));
 
         matchOwnerUuid(ownerUuid, productImage);
 
         productImageRepository.delete(productImage);
     }
 
-    private static void matchOwnerUuid(String ownerUuid, ProductImage productImage) {
+    private void matchOwnerUuid(String ownerUuid, ProductImage productImage) {
         if (!Objects.equals(productImage.getOwnerUuid(), ownerUuid)) {
-            throw new IllegalArgumentException("Owner UUID does not match ProductImage owner");
+            throw new ProductImageNotFoundException("Owner UUID does not match ProductImage owner");
         }
     }
 }

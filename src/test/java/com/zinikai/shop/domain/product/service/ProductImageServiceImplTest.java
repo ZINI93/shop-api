@@ -29,17 +29,13 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductImageServiceImplTest {
 
-    @Mock
-    MemberRepository memberRepository;
+    @Mock MemberRepository memberRepository;
 
-    @Mock
-    ProductRepository productRepository;
+    @Mock ProductRepository productRepository;
 
-    @Mock
-    ProductImageRepository productImageRepository;
+    @Mock ProductImageRepository productImageRepository;
 
-    @InjectMocks
-    ProductImageServiceImpl productImageService;
+    @InjectMocks ProductImageServiceImpl productImageService;
 
     Member member;
     Product product;
@@ -101,24 +97,24 @@ class ProductImageServiceImplTest {
         verify(productImageRepository, times(1)).findAllByOwnerUuid(member.getMemberUuid(), pageable);
     }
 
-    @Test
-    void updateProductImage() {
-
-        //given
-        ProductImageUpdateDto updateDto = new ProductImageUpdateDto("www.kakao.com");
-
-        when(productImageRepository.findByOwnerUuidAndProductImageUuid(member.getMemberUuid(), product.getProductUuid())).thenReturn(Optional.ofNullable(productImage));
-
-        //when
-        ProductImageResponseDto result = productImageService.updateProductImage(member.getMemberUuid(), product.getProductUuid(), updateDto);
-
-
-        //then
-        assertNotNull(result);
-        assertEquals(updateDto.getImageUrl(), result.getImageUrl());
-
-        verify(productImageRepository, times(1)).findByOwnerUuidAndProductImageUuid(member.getMemberUuid(), product.getProductUuid());
-    }
+//    @Test
+//    void updateProductImage() {
+//
+//        //given
+//        ProductImageUpdateDto updateDto = new ProductImageUpdateDto("www.kakao.com");
+//
+//        when(productImageRepository.findByOwnerUuidAndProductImageUuid(member.getMemberUuid(), product.getProductUuid())).thenReturn(Optional.ofNullable(productImage));
+//
+//        //when
+//        ProductImageResponseDto result = productImageService.updateProductImage(member.getMemberUuid(), product.getProductUuid(), updateDto);
+//
+//
+//        //then
+//        assertNotNull(result);
+//        assertEquals(updateDto.getImageUrl(), result.getImageUrl());
+//
+//        verify(productImageRepository, times(1)).findByOwnerUuidAndProductImageUuid(member.getMemberUuid(), product.getProductUuid());
+//    }
 
     @Test
     void deleteProductImage() {

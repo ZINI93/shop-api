@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -27,11 +28,15 @@ public class ProductUpdateDto {
     @Min(value = 1 , message = "在庫は1000個以内で入力してください")
     @Max(value = 1000000 , message = "在庫は1000個以内で入力してください")
     private Integer stock;
+    private List<ProductImageUpdateDto> images;
 
-    public ProductUpdateDto(String name, BigDecimal price, String description, Integer stock) {
+    @Builder
+
+    public ProductUpdateDto(String name, BigDecimal price, String description, Integer stock, List<ProductImageUpdateDto> images) {
         this.name = name;
         this.price = price;
         this.description = description;
         this.stock = stock;
+        this.images = images;
     }
 }

@@ -61,7 +61,7 @@ class DeliveryServiceImplTest {
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
 
-        orders = Orders.builder().orderUuid(UUID.randomUUID().toString()).address(address).member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.COMPLETED).build();
+        orders = Orders.builder().orderUuid(UUID.randomUUID().toString()).address(address).member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.ORDER_COMPLETED).build();
         setOrdersId(orders, 1L);
 
         requestDto = new DeliveryRequestDto(

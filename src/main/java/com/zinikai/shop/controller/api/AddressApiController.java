@@ -26,7 +26,7 @@ public class AddressApiController {
 
         String memberUuid = getMemberUuid(authentication);
 
-        AddressResponseDto address = addressService.createAddress(memberUuid, requestDto);
+        AddressResponseDto address = addressService.createAddressWithValidation(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{addressUuid}")

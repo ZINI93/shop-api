@@ -2,16 +2,16 @@ package com.zinikai.shop.domain.product.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.product.dto.ProductRequestDto;
 import com.zinikai.shop.domain.product.dto.ProductResponseDto;
 import com.zinikai.shop.domain.product.exception.OutOfStockException;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @ToString
 @Getter
@@ -69,7 +69,7 @@ public class Product extends TimeStamp {
     }
 
 
-    public ProductResponseDto toResponseDto() {
+    public ProductResponseDto toResponseDto(List<String> imageUrls) {
 
         return ProductResponseDto.builder()
                 .name(this.name)
@@ -79,9 +79,9 @@ public class Product extends TimeStamp {
                 .productCondition(this.productCondition)
                 .productMaker(this.productMaker)
                 .productUuid(this.getProductUuid())
+                .productImageUrls(imageUrls)
                 .build();
     }
-
     //アップデート
     public void updateInfo(String name, BigDecimal price, String description, Integer stock) {
         this.name = name;
@@ -104,6 +104,11 @@ public class Product extends TimeStamp {
         this.stock += quantity;
     }
 
+    public void validateStock(ProductRequestDto requestDto){
+        if (requestDto.getStock() == null || requestDto.getStock() <= 0) {
+            throw new OutOfStockException("Stock must be greater than 0");
+        }
+    }
 }
 
 

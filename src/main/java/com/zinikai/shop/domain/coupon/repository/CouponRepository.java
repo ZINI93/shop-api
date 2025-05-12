@@ -1,6 +1,5 @@
 package com.zinikai.shop.domain.coupon.repository;
 
-import com.zinikai.shop.domain.coupon.dto.CouponResponseDto;
 import com.zinikai.shop.domain.coupon.entity.Coupon;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +14,8 @@ import java.util.Optional;
 @Repository
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
-    Optional<Coupon> findByOwnerUuid(String ownerUuid);
     Optional<Coupon> findByCouponUuid(String couponUuid);
-    Optional<Coupon> findByOwnerUuidAndCouponUuid(String ownerUuid, String couponUuid);
+    Optional<Coupon> findByMemberMemberUuidAndCouponUuid(String memberUuid, String couponUuid);
 
 
     @Query("SELECT c FROM Coupon c " +

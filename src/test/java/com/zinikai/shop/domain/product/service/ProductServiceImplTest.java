@@ -4,6 +4,7 @@ import com.zinikai.shop.domain.category.entity.Category;
 import com.zinikai.shop.domain.category.entity.ProductCategory;
 import com.zinikai.shop.domain.category.repository.CategoryRepository;
 import com.zinikai.shop.domain.category.repository.ProductCategoryRepository;
+import com.zinikai.shop.domain.category.service.ProductCategoryServiceImpl;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.product.dto.ProductImageResponseDto;
@@ -23,6 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -36,12 +40,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
 
-    @Mock private ProductRepository productRepository;
-    @Mock private MemberRepository memberRepository;
-    @Mock private CategoryRepository categoryRepository;
-    @Mock private ProductImageRepository productImageRepository;
-    @Mock private ProductCategoryRepository productCategoryRepository;
-    @InjectMocks private ProductServiceImpl productService;
+    @Mock
+    private ProductRepository productRepository;
+    @Mock
+    private MemberRepository memberRepository;
+    @Mock
+    private CategoryRepository categoryRepository;
+    @Mock
+    private ProductImageRepository productImageRepository;
+    @Mock
+    private ProductCategoryRepository productCategoryRepository;
+    @Mock
+    private ProductCategoryServiceImpl productCategoryService;
+
+    @InjectMocks
+    private ProductServiceImpl productService;
 
     ProductRequestDto requestDto;
     Product product;
@@ -62,13 +75,13 @@ class ProductServiceImplTest {
     void setup() throws Exception {
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
-        setMemberId(member, 1L);
-        product  = Product.builder().productUuid(UUID.randomUUID().toString()).build();
-        productImage = ProductImage.builder().imageUrl("www.image.com").productImageUuid(UUID.randomUUID().toString()).build();
         category = Category.builder().categoryUuid(UUID.randomUUID().toString()).build();
-        productCategory = new ProductCategory(category, product ,UUID.randomUUID().toString());
-        images = Arrays.asList(new ProductImage(product, "www.image.com", member.getMemberUuid(),UUID.randomUUID().toString()),
-                new ProductImage(product, "www.image2.com", member.getMemberUuid(),UUID.randomUUID().toString()));
+
+        productImage = ProductImage.builder().imageUrl("www.image.com").productImageUuid(UUID.randomUUID().toString()).build();
+
+        productCategory = new ProductCategory(category, product, UUID.randomUUID().toString());
+        images = Arrays.asList(new ProductImage(product, "www.image.com", member.getMemberUuid(), UUID.randomUUID().toString()),
+                new ProductImage(product, "www.image2.com", member.getMemberUuid(), UUID.randomUUID().toString()));
 
         List<ProductImageResponseDto> productImageResponseDtoStream = images.stream().map(ProductImage::toResponse).collect(Collectors.toList());
 
@@ -92,79 +105,85 @@ class ProductServiceImplTest {
                 ProductStatus.ON_SALE,
                 requestDto.getProductCondition(),
                 requestDto.getProductMaker(),
-                product.getProductUuid(),
-                product.getMember()
+                UUID.randomUUID().toString(),
+                member
         );
-
-
     }
 
     @Test
-    @DisplayName("商品登録")
-    void testCreateProduct() {
+    void createProcessProduct() {
+
         //given
-
-
         when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(member));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        when(productImageRepository.saveAll(anyList())).thenReturn(images);
         when(categoryRepository.findByCategoryUuid(requestDto.getCategoryUuid())).thenReturn(Optional.ofNullable(category));
-        when(productCategoryRepository.save(any(ProductCategory.class))).thenReturn(productCategory);
+        when(productRepository.save(any(Product.class))).thenReturn(product);
 
         //when
-        ProductResponseDto result = productService.createProduct(member.getMemberUuid(), requestDto);
+        ProductResponseDto result = productService.createProductProcess(product.getMember().getMemberUuid(), requestDto);
 
         //then
         assertNotNull(result);
-        assertEquals(requestDto.getName(), result.getName());
-        assertEquals(requestDto.getPrice(), result.getPrice());
+        assertEquals(product.getProductCondition(),result.getProductCondition());
+        assertEquals(product.getDescription(),result.getDescription());
 
+        verify(memberRepository,times(1)).findByMemberUuid(member.getMemberUuid());
+        verify(categoryRepository,times(1)).findByCategoryUuid(category.getCategoryUuid());
         verify(productRepository, times(1)).save(any(Product.class));
-        verify(productImageRepository, times(1)).saveAll(anyList());
     }
 
-//    @Test
-//    void findByIdTest() {
-//        //given
-//
-//        PageRequest pageable = PageRequest.of(0, 10);
-//        List<ProductResponseDto> mockProducts = List.of(product.toResponseDto());
-//        Page<ProductResponseDto> productResponseDtos = new PageImpl<>(mockProducts, pageable, mockProducts.size());
-//
-//
-//        when(productRepository.searchProduct(member.getMemberUuid(),)).thenReturn(Optional.ofNullable(mockProducts));
-//
-//        //when
-//        ProductResponseDto result = productService.getProductById(1L);
-//
-//        assertNotNull(result);
-//        assertEquals(testProduct.getName(), result.getName());
-//        verify(productRepository, times(1)).findById(1L);
-//    }
+    @Test
+    void findByIdTest() {
+        //given
+
+        String sortField = "createAt";
+
+        PageRequest pageable = PageRequest.of(0, 10);
+        List<ProductResponseDto> mockProducts = List.of(product.toResponseDto(null));
+        PageImpl<ProductResponseDto> mockProduct = new PageImpl<>(mockProducts, pageable, mockProducts.size());
+
+        when(productRepository.searchProduct(
+               eq(product.getMember().getMemberUuid()),
+                contains("自"),
+                any(),
+                any(),
+                eq(sortField),
+                eq(pageable)
+        )).thenReturn(mockProduct);
+
+        //when
+        Page<ProductResponseDto> result = productService.searchProducts(product.getMember().getMemberUuid(), product.getName(), new BigDecimal(100.00), new BigDecimal(2000.00), sortField, pageable);
+
+        assertNotNull(result);
+
+        verify(productRepository, times(1)).searchProduct( eq(product.getMember().getMemberUuid()),
+                contains("自"),
+                any(),
+                any(),
+                eq(sortField),
+                eq(pageable));
+    }
+
 
 
     @Test
     @DisplayName("アップデート")
     void updateProduct() {
 
-
-
         //given
 
-        ProductUpdateDto updateProduct = new ProductUpdateDto("momoka", new BigDecimal(3000), "masita kakao", 20);
-
+        ProductUpdateDto productUpdateDto = new ProductUpdateDto("포테이토칩", new BigDecimal(1000.00), "맛있는 포테이토칩", 100, null);
         when(productRepository.findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid())).thenReturn(Optional.of(product));
 
         //when
-        ProductResponseDto updatedProduct = productService.updateProduct(member.getMemberUuid(),product.getProductUuid(),updateProduct);
+        ProductResponseDto result = productService.updateProduct(product.getMember().getMemberUuid(), product.getProductUuid(), productUpdateDto);
 
 
         //then
-        assertNotNull(updatedProduct);
-        assertEquals("momoka", updatedProduct.getName());
-        assertEquals( new BigDecimal(3000), updatedProduct.getPrice());
-        verify(productRepository, times(1)).findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
+        assertNotNull(result);
+        assertEquals(productUpdateDto.getName(), result.getName());
+        assertEquals(productUpdateDto.getPrice(), result.getPrice());
 
+        verify(productRepository, times(1)).findByMemberMemberUuidAndProductUuid(member.getMemberUuid(),product.getProductUuid());
     }
 
     @Test
