@@ -7,6 +7,7 @@ import com.zinikai.shop.domain.coupon.entity.Coupon;
 import com.zinikai.shop.domain.coupon.entity.DiscountType;
 import com.zinikai.shop.domain.coupon.repository.CouponRepository;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.entity.MemberRole;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,12 +39,11 @@ class CouponServiceImplTest {
     Coupon coupon;
     CouponRequestDto requestDto;
 
-
+    
     @BeforeEach
     void setup(){
 
-        member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
-
+        member = Member.builder().memberUuid(UUID.randomUUID().toString()).role(MemberRole.ADMIN).build();
 
         requestDto = CouponRequestDto.builder()
                 .name("shop_coupon")
@@ -58,7 +58,7 @@ class CouponServiceImplTest {
 
         coupon = new Coupon(
                 UUID.randomUUID().toString(),
-                member.getMemberUuid(),
+                member,
                 requestDto.getName(),
                 requestDto.getStartDate(),
                 requestDto.getEndDate(),
@@ -78,13 +78,15 @@ class CouponServiceImplTest {
         when(couponRepository.save(any(Coupon.class))).thenReturn(coupon);
 
         //when
-        CouponResponseDto result = couponService.createCoupon(member.getMemberUuid(), requestDto);
+        System.out.println("role:" + member.getRole());
+        CouponResponseDto result = couponService.createCouponWithValidate(member.getMemberUuid(), requestDto);
 
         //then
         assertNotNull(result);
         assertEquals(requestDto.getDiscountValue(),result.getDiscountValue());
         assertEquals(requestDto.getName(),result.getName());
 
+        verify(memberRepository, times(1)).findByMemberUuid(member.getMemberUuid());
         verify(couponRepository,times(1)).save(any(Coupon.class));
     }
 
@@ -134,7 +136,7 @@ class CouponServiceImplTest {
     void updateCoupon() {
         //given
         when(couponRepository.findByMemberMemberUuidAndCouponUuid(member.getMemberUuid(),coupon.getCouponUuid())).thenReturn(Optional.ofNullable(coupon));
-        CouponUpdateDto updateDto = new CouponUpdateDto(LocalDateTime.now(),LocalDateTime.now().plusDays(5),new BigDecimal("1000.00"),
+        CouponUpdateDto updateDto = new CouponUpdateDto(LocalDateTime.now().plusDays(1),LocalDateTime.now().plusDays(5),new BigDecimal("1000.00"),
                 new BigDecimal("1000.00"),DiscountType.FIXED_AMOUNT,"zini-shop",3);
 
         //when

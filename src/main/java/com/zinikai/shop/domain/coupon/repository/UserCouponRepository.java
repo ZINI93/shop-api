@@ -21,15 +21,30 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, Long> {
 
     Optional<UserCoupon> findByMemberMemberUuidAndUserCouponUuid(String memberUuid, String userCouponUuid);
 
-
-
     @Query("select uc from UserCoupon uc " +
             "join fetch uc.coupon c " +
             "join fetch uc.member m " +
             "where m.memberUuid = :memberUuid " +
             "and c.startDate < :now " +
             "and c.endDate > :now")
-    Page<UserCoupon> findValidUserCoupons(@Param("memberUuid") String memberUuid, @Param("now") LocalDateTime now, Pageable pageable);
+    Page<UserCoupon> findAllUserCoupons(@Param("memberUuid") String memberUuid, @Param("now") LocalDateTime now, Pageable pageable);
+
+
+    @Query("select uc from UserCoupon uc " +
+            "join fetch uc.coupon c " +
+            "join fetch uc.member m " +
+            "where m.memberUuid = :memberUuid " +
+            "and c.startDate <= :now " +
+            "and uc.isUsed = false")
+    Page<UserCoupon> findUsableCoupons(@Param("memberUuid") String memberUuid, @Param("now") LocalDateTime now, Pageable pageable);
+
+
+    @Query("select uc from UserCoupon uc " +
+            "join fetch uc.coupon c " +
+            "join fetch uc.member m " +
+            "where m.memberUuid = :memberUuid " +
+            "and c.endDate > :now")
+    Page<UserCoupon> findUsedCoupons(@Param("memberUuid") String memberUuid, @Param("now") LocalDateTime now, Pageable pageable);
 
     boolean existsByMemberAndCoupon(Member member, Coupon coupon);
 }
