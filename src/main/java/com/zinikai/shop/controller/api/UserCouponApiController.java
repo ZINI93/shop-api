@@ -58,7 +58,7 @@ public class UserCouponApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        Page<UserCouponResponseDto> userCoupon = userCouponService.myCouponList(memberUuid, pageable);
+        Page<UserCouponResponseDto> userCoupon = userCouponService.myAllCouponList(memberUuid, pageable);
 
         return ResponseEntity.ok(userCoupon);
     }

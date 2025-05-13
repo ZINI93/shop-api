@@ -1,6 +1,5 @@
 package com.zinikai.shop.domain.coupon.service;
 
-import com.zinikai.shop.controller.api.UserCouponApiController;
 import com.zinikai.shop.domain.coupon.dto.UserCouponResponseDto;
 import com.zinikai.shop.domain.coupon.entity.Coupon;
 import com.zinikai.shop.domain.coupon.entity.UserCoupon;
@@ -18,7 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,15 +29,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserCouponServiceImplTest {
 
-    @Mock
-    MemberRepository memberRepository;
-    @Mock
-    CouponRepository couponRepository;
-    @Mock
-    UserCouponRepository userCouponRepository;
+    @Mock MemberRepository memberRepository;
+    @Mock CouponRepository couponRepository;
+    @Mock UserCouponRepository userCouponRepository;
 
-    @InjectMocks
-    UserCouponServiceImpl userCouponService;
+    @InjectMocks UserCouponServiceImpl userCouponService;
 
     Member member;
 
@@ -50,7 +45,7 @@ class UserCouponServiceImplTest {
     void setup() {
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
-        coupon = Coupon.builder().ownerUuid(member.getMemberUuid()).couponUuid(UUID.randomUUID().toString()).startDate(LocalDateTime.now().minusDays(2)).build();
+        coupon = Coupon.builder().member(member).couponUuid(UUID.randomUUID().toString()).startDate(LocalDateTime.now().minusDays(2)).build();
 
         userCoupon = UserCoupon.builder()
                 .member(member)
@@ -58,7 +53,6 @@ class UserCouponServiceImplTest {
                 .usedAt(null)
                 .isUsed(false)
                 .build();
-
 
     }
 
@@ -76,6 +70,8 @@ class UserCouponServiceImplTest {
         //then
         assertNotNull(result);
 
+        verify(memberRepository,times(1)).findByMemberUuid(member.getMemberUuid());
+        verify(couponRepository,times(1)).findByCouponUuid(coupon.getCouponUuid());
         verify(userCouponRepository, times(1)).save(any(UserCoupon.class));
     }
 
@@ -100,24 +96,54 @@ class UserCouponServiceImplTest {
 
         //given
         PageRequest pageable = PageRequest.of(0, 10);
-
         List<UserCoupon> mockUserCoupons = List.of(userCoupon);
         PageImpl<UserCoupon> mockPage = new PageImpl<>(mockUserCoupons, pageable, mockUserCoupons.size());
 
-        LocalDateTime now = LocalDateTime.now();
-
-        when(userCouponRepository.findValidUserCoupons(member.getMemberUuid(),now,pageable)).thenReturn(mockPage);
+        when(userCouponRepository.findAllUserCoupons(
+                eq(member.getMemberUuid()),
+                any(LocalDateTime.class),
+                        eq(pageable)))
+                .thenReturn(mockPage);
 
         //when
-        Page<UserCouponResponseDto> result = userCouponService.myCouponList(member.getMemberUuid(), pageable);
+        Page<UserCouponResponseDto> result = userCouponService.myAllCouponList(member.getMemberUuid(), pageable);
 
         //then
         assertNotNull(result);
-        assertEquals(mockUserCoupons.size(),result.getSize());
+        assertEquals(mockPage.getSize(),result.getSize());
 
-        verify(userCouponRepository, times(1)).findValidUserCoupons(member.getMemberUuid(),now,pageable);
+        verify(userCouponRepository, times(1)).findAllUserCoupons(eq(member.getMemberUuid()),any(LocalDateTime.class),eq(pageable));
 
     }
+
+    @Test
+    void unusedCouponListTest(){
+
+        //given
+        PageRequest pageable = PageRequest.of(0, 10);
+        List<UserCoupon> mockData = List.of(userCoupon);
+        PageImpl<UserCoupon> userCoupons = new PageImpl<>(mockData, pageable, mockData.size());
+
+        LocalDateTime now = LocalDateTime.now();
+
+        when(userCouponRepository.findUsableCoupons(eq(member.getMemberUuid()), any(LocalDateTime.class), eq(pageable))).thenReturn(userCoupons);
+
+
+        //when
+
+        Page<UserCouponResponseDto> result = userCouponService.myUnusedCouponList(member.getMemberUuid(), pageable);
+
+
+        //then
+        assertNotNull(result);
+        assertEquals(userCoupons.getSize(),result.getSize());
+        assertEquals(false, result.getContent().get(0).getIsUsed() );
+
+        verify(userCouponRepository,times(1)).findUsableCoupons(eq(member.getMemberUuid()), any(LocalDateTime.class), eq(pageable));
+
+    }
+
+
 
     @Test
     void deleteCoupon() {
