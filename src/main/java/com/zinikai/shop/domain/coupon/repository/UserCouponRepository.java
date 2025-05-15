@@ -43,7 +43,8 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, Long> {
             "join fetch uc.coupon c " +
             "join fetch uc.member m " +
             "where m.memberUuid = :memberUuid " +
-            "and c.endDate > :now")
+            "and c.endDate >= :now " +
+            "and uc.isUsed = true")
     Page<UserCoupon> findUsedCoupons(@Param("memberUuid") String memberUuid, @Param("now") LocalDateTime now, Pageable pageable);
 
     boolean existsByMemberAndCoupon(Member member, Coupon coupon);

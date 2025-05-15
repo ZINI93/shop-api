@@ -24,7 +24,7 @@ public class MemberApiController {
 
     @PostMapping("/join")
     public ResponseEntity<MemberResponseDto> createMember(@Valid @RequestBody MemberRequestDto requestDto){
-        MemberResponseDto member = memberService.createMember(requestDto);
+        MemberResponseDto member = memberService.createMemberWithValidate(requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{memberUuid}")

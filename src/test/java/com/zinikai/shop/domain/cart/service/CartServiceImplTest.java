@@ -76,21 +76,22 @@ class CartServiceImplTest {
 
     @Test
     @DisplayName("カートをに商品を追加します")
-    void createCart(){
+    void createCartWithValidateTest(){
        //given
 
-        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.of(member));
+        when(productRepository.findByProductUuid(cartRequest.getProductUuid())).thenReturn(Optional.of(product));
         when(cartRepository.save(any(Cart.class))).thenReturn(cart);
 
         //when
 
-        CartResponseDto result = cartService.createCart(member.getMemberUuid(),cartRequest);
+        CartResponseDto result = cartService.createCartWithValidate(member.getMemberUuid(),cartRequest);
 
         //then
         assertNotNull(result);
         assertEquals(10,result.getQuantity());
         assertNotEquals(-1, result.getQuantity());
+
         verify(cartRepository,times(1)).save(any(Cart.class));
     }
 

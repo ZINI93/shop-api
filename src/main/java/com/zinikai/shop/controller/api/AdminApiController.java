@@ -35,11 +35,15 @@ public class AdminApiController {
 
     @GetMapping("/members/search")
     public ResponseEntity<Page<MemberResponseDto>> findByNameAndPhoneNum(
+            Authentication authentication,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String phoneNumber,
             @PageableDefault(size = 20, page = 0) Pageable pageable
     ){
-        Page<MemberResponseDto> nameAndPhoneNumber = memberService.getNameAndPhoneNumber(name, phoneNumber, pageable);
+
+        String memberUuid = getCustomUserDetails(authentication);
+
+        Page<MemberResponseDto> nameAndPhoneNumber = memberService.getNameAndPhoneNumber(memberUuid,name, phoneNumber, pageable);
         return ResponseEntity.ok(nameAndPhoneNumber);
     }
 
@@ -49,6 +53,11 @@ public class AdminApiController {
         return ResponseEntity.noContent().build();
     }
 
+
     //회원 거래내역, 회원 주문내역, 거래 전체 내역 구현필요함
 
+    private static String getCustomUserDetails(Authentication authentication) {
+        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        return principal.getMemberUuid();
+    }
 }

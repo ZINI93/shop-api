@@ -510,6 +510,13 @@ API のテストを行う際は、本ドキュメントを参考にしてくだ�
 - **HTTPメソッド:** `GET`
 - **URL:** `/api/coupons/me `
 
+#### **3) 使用前クーポンのリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/coupons/me/unused `
+
+#### **4) 使用したクーポンのリスト**
+- **HTTPメソッド:** `GET`
+- **URL:** `/api/coupons/me/used `
 
 #### **4) クーポンを削除**
 - **HTTPメソッド:** `DELETE`

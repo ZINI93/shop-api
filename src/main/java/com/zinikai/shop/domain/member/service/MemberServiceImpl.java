@@ -5,6 +5,9 @@ import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.dto.MemberResponseDto;
 import com.zinikai.shop.domain.member.dto.MemberUpdateDto;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.entity.MemberRole;
+import com.zinikai.shop.domain.member.exception.GradeMissMatchException;
+import com.zinikai.shop.domain.member.exception.MemberNotFoundException;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,23 +29,30 @@ public class MemberServiceImpl implements MemberService {
     private final MailService mailService;
 
     @Override
-    @Transactional
-    public MemberResponseDto createMember(MemberRequestDto requestDto) {
+    public Member createMember(MemberRequestDto requestDto) {
 
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
 
-        Member member = Member.builder()
+        return Member.builder()
                 .email(requestDto.getEmail())
                 .password(encodedPassword)
                 .name(requestDto.getName())
                 .phoneNumber(requestDto.getPhoneNumber())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public MemberResponseDto createMemberWithValidate(MemberRequestDto requestDto) {
+
+        Member member = createMember(requestDto);
+        Member savedMember = memberRepository.save(member);
 
         mailService.sendWelcomeEmail(member.getEmail(), member.getName());
 
-        log.info("Created savedMember:{}", member);
+        log.info("Created savedMember UUID:{}", member);
 
-        return memberRepository.save(member).toResponseDto();
+        return savedMember.toResponseDto();
     }
 
 
@@ -51,17 +61,18 @@ public class MemberServiceImpl implements MemberService {
 
         log.info("Searching member for member UUID:{}", memberUuid);
 
-        Member member = getUuid(memberUuid);
+        Member member = findMemberByMemberUuid(memberUuid);
 
         return member.toResponseDto();
     }
 
-    /**
-     * 管理者のサーチ機能
-     */
 
     @Override
-    public Page<MemberResponseDto> getNameAndPhoneNumber(String name, String phoneNumber, Pageable pageable) {
+    public Page<MemberResponseDto> getNameAndPhoneNumber(String memberUuid, String name, String phoneNumber, Pageable pageable) {
+
+        Member member = findMemberByMemberUuid(memberUuid);
+        validateMemberGrade(member);
+
         return memberRepository.findByNameAndPhoneNumber(name, phoneNumber, pageable);
     }
 
@@ -71,7 +82,7 @@ public class MemberServiceImpl implements MemberService {
 
         log.info("Updating member for member UUID:{}", memberUuid);
 
-        Member member = getUuid(memberUuid);
+        Member member = findMemberByMemberUuid(memberUuid);
 
         String encodedPassword = updateDto.getPassword() != null ?
                 passwordEncoder.encode(updateDto.getPassword()) :
@@ -83,7 +94,7 @@ public class MemberServiceImpl implements MemberService {
                 updateDto.getPhoneNumber()
         );
 
-        log.info("updated member:{}", member);
+        log.info("Updated member UUID:{}", member.getMemberUuid());
 
         return member.toResponseDto();
     }
@@ -94,16 +105,19 @@ public class MemberServiceImpl implements MemberService {
 
         log.info("Deleting member for member UUID:{} ", memberUuid);
 
-        Member member = getUuid(memberUuid);
+        Member member = findMemberByMemberUuid(memberUuid);
 
         memberRepository.delete(member);
     }
 
-    private Member getUuid(String memberUuid) {
+    private Member findMemberByMemberUuid(String memberUuid) {
         return memberRepository.findByMemberUuid(memberUuid)
-                .orElseThrow(() -> {
-                    log.error("Member not found for UUID: {}", memberUuid);
-                    return new IllegalArgumentException("Not found member UUID");
-                });
+                .orElseThrow(() -> new MemberNotFoundException("Member UUID: Member not found"));
+    }
+
+    private void validateMemberGrade(Member member) {
+        if (member.getRole() != MemberRole.ADMIN) {
+            throw new GradeMissMatchException("Insufficient privileges. Admin grade required ");
+        }
     }
 }

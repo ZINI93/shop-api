@@ -1,6 +1,7 @@
 package com.zinikai.shop.domain.payment.entity;
 
 import com.zinikai.shop.domain.TimeStamp;
+import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import jakarta.persistence.*;
@@ -30,18 +31,22 @@ public class Payment extends TimeStamp {
     @Column(nullable = false)
     private String paymentMethod;
 
-    @Column(name = "owner_uuid", nullable = false , updatable = false)
+    /*@Column(name = "owner_uuid", nullable = false , updatable = false)
     private String ownerUuid;
+*/
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false, updatable = false)
+    private Member member;
 
     @Column(name = "payment_uuid", unique = true, nullable = false , updatable = false)
     private String paymentUuid;
 
     @Builder
-    public Payment( Orders orders, PaymentStatus status, String paymentMethod,String ownerUuid, String paymentUuid) {
+    public Payment( Orders orders, PaymentStatus status, String paymentMethod,Member member, String paymentUuid) {
         this.orders = orders;
         this.status = status;
         this.paymentMethod = paymentMethod;
-        this.ownerUuid = ownerUuid;
+        this.member = member;
         this.paymentUuid = UUID.randomUUID().toString();
     }
 

@@ -5,12 +5,15 @@ import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
+import com.zinikai.shop.domain.order.exception.OrderNotFoundException;
 import com.zinikai.shop.domain.order.repository.OrderItemRepository;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import com.zinikai.shop.domain.payment.dto.PaymentResponseDto;
 import com.zinikai.shop.domain.payment.dto.PaymentUpdateDto;
 import com.zinikai.shop.domain.payment.entity.Payment;
 import com.zinikai.shop.domain.payment.entity.PaymentStatus;
+import com.zinikai.shop.domain.payment.entity.QPayment;
+import com.zinikai.shop.domain.payment.exception.StateMissMatchException;
 import com.zinikai.shop.domain.payment.repository.PaymentRepository;
 import com.zinikai.shop.domain.product.entity.Product;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orders(orders)
                 .status(PaymentStatus.PENDING)
                 .paymentMethod(orders.getPaymentMethod())
-                .ownerUuid(member.getMemberUuid())
+                .member(member)
                 .build();
 
         log.info("Created payment Uuid:{}", savedPayment.getPaymentUuid());
@@ -54,23 +57,12 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(savedPayment).toResponse();
     }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto confirmPayment(String ownerUuid, String paymentUuid) {
+    @Override @Transactional
+    public PaymentResponseDto confirmPayment(String memberUuid, String paymentUuid) {
 
-        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
-
-        Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
-                .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
-
-        if (payment.getStatus() != PaymentStatus.PENDING) {
-            throw new IllegalArgumentException("Payment is already confirmed");
-        }
-
-        if (order.getStatus() != Status.ORDER_PENDING) {
-            throw new IllegalArgumentException("Order is already confirmed");
-        }
+        Payment payment = findPaymentByMemberUuidAndPaymentUuid(memberUuid, paymentUuid);
+        Orders order = findOrderByOrderUuid(payment);
+        validateState(payment, order);
 
         BigDecimal totalAmount = order.getTotalAmount();
         Member member = order.getMember();
@@ -96,14 +88,34 @@ public class PaymentServiceImpl implements PaymentService {
         return payment.toResponse();
     }
 
+    private void validateState(Payment payment, Orders order) {
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new StateMissMatchException("Payment is already confirmed");
+        }
+
+        if (order.getStatus() != Status.ORDER_PENDING) {
+            throw new StateMissMatchException("Order is already confirmed");
+        }
+    }
+
+    private Orders findOrderByOrderUuid(Payment payment) {
+        return ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
+                .orElseThrow(() -> new OrderNotFoundException("order Not found"));
+    }
+
+    private Payment findPaymentByMemberUuidAndPaymentUuid(String memberUuid, String paymentUuid) {
+        return paymentRepository.findByMemberMemberUuidAndPaymentUuid(memberUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + memberUuid + ", payment UUID: " + paymentUuid));
+    }
+
     @Override
     @Transactional
-    public PaymentResponseDto cancelPayment(String ownerUuid, String paymentUuid) {
+    public PaymentResponseDto cancelPayment(String memberUuid, String paymentUuid) {
 
-        log.info("Canceling payment: ownerUuid={}, paymentUuid={}", ownerUuid, paymentUuid);
+        log.info("Canceling payment: member UUID={}, pyment UUID={}", memberUuid, paymentUuid);
 
-        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
+        Payment payment = paymentRepository.findByMemberMemberUuidAndPaymentUuid(memberUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for memberUuid UUID: " + memberUuid + ", payment UUID: " + paymentUuid));
 
         Orders order = ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())
                 .orElseThrow(() -> new IllegalArgumentException("order not found with ID: " + payment.getOrders().getOrderUuid()));
@@ -131,37 +143,36 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Searching payment for owner UUID :{}", ownerUuid);
 
-        Page<Payment> payments = paymentRepository.findAllByOwnerUuid(ownerUuid, pageable);
+        Page<Payment> payments = paymentRepository.findAllByMemberMemberUuid(ownerUuid, pageable);
 
         return payments.map(Payment::toResponse);
 
     }
 
     @Override
-    public PaymentResponseDto getPayment(String ownerUuid, String paymentUuid) {
+    public PaymentResponseDto getPayment(String memberUuid, String paymentUuid) {
 
-        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
+        Payment payment = paymentRepository.findByMemberMemberUuidAndPaymentUuid(memberUuid, paymentUuid)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found for member UUID: " + memberUuid + ", payment UUID: " + paymentUuid));
 
-        matchOwnerUuid(ownerUuid, payment);
+        matchOwnerUuid(memberUuid, payment);
 
         return payment.toResponse();
     }
 
     @Override
     @Transactional
-    public PaymentResponseDto updatePayment(String ownerUuid, String paymentUuid, PaymentUpdateDto updateDto) {
+    public PaymentResponseDto updatePayment(String memberUuid, String paymentUuid, PaymentUpdateDto updateDto) {
 
-        log.info("Updating payment for Owner UUID :{}, Payment UUID:{}", ownerUuid, paymentUuid);
+        log.info("Updating payment for Owner UUID :{}, Payment UUID:{}", memberUuid, paymentUuid);
 
-        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
+        Payment payment = findPaymentByMemberUuidAndPaymentUuid(memberUuid, paymentUuid);
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new IllegalArgumentException("Payment is already confirmed");
         }
 
-        matchOwnerUuid(ownerUuid, payment);
+        matchOwnerUuid(memberUuid, payment);
 
         payment.updateInfo(updateDto.getStatus(), updateDto.getPaymentMethod());
 
@@ -189,21 +200,20 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        log.info("updated payment:{}", payment);
+        log.info("updated payment:{}", QPayment.payment);
 
         return payment.toResponse();
     }
 
     @Override
     @Transactional
-    public void deletePayment(String ownerUuid, String paymentUuid) {
+    public void deletePayment(String memberUuid, String paymentUuid) {
 
-        log.info("Deleting payment for owner UUID:{}", ownerUuid);
+        log.info("Deleting payment for owner UUID:{}", memberUuid);
 
-        Payment payment = paymentRepository.findByOwnerUuidAndPaymentUuid(ownerUuid, paymentUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found for owner UUID: " + ownerUuid + ", payment UUID: " + paymentUuid));
+        Payment payment = findPaymentByMemberUuidAndPaymentUuid(memberUuid, paymentUuid);
 
-        matchOwnerUuid(ownerUuid, payment);
+        matchOwnerUuid(memberUuid, payment);
 
         paymentRepository.delete(payment);
     }
@@ -234,7 +244,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private static void matchOwnerUuid(String ownerUuid, Payment payment) {
-        if (!Objects.equals(payment.getOwnerUuid(), ownerUuid)) {
+        if (!Objects.equals(payment.getMember().getMemberUuid(), ownerUuid)) {
             throw new IllegalArgumentException("Owner UUID not match payment owner");
         }
     }
