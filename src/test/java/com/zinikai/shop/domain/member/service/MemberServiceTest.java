@@ -88,7 +88,7 @@ class MemberServiceTest {
 
         //when
         mailService.sendWelcomeEmail(member.getEmail(),member.getName());
-        MemberResponseDto savedMember = memberService.createMember(requestDto);
+        MemberResponseDto savedMember = memberService.createMemberWithValidate(requestDto);
 
         //then
         assertNotNull(savedMember);
@@ -122,15 +122,20 @@ class MemberServiceTest {
     @DisplayName("nameとphoneNumberで探す")
     void findByNameAndPhoneNumber() {
         //given
-        PageRequest pageable = PageRequest.of(0, 5);
 
+
+        PageRequest pageable = PageRequest.of(0, 10);
         List<MemberResponseDto> mockData = List.of(member.toResponseDto());
-        PageImpl<MemberResponseDto> mockPage = new PageImpl<>(mockData, pageable, 2);
+        PageImpl<MemberResponseDto> mockPage = new PageImpl<>(mockData, pageable, mockData.size());
 
+
+        when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(member));
         when(memberRepository.findByNameAndPhoneNumber(member.getName(), member.getPhoneNumber(), pageable)).thenReturn(mockPage);
 
         // when
-        Page<MemberResponseDto> result = memberService.getNameAndPhoneNumber(member.getName(), member.getPhoneNumber(), pageable);
+        Page<MemberResponseDto> result = memberService.getNameAndPhoneNumber(member.getMemberUuid(),member.getName(), member.getPhoneNumber(), pageable);
+
+
         //then
         assertEquals(1, result.getTotalElements());
         assertEquals(1, result.getContent().size());

@@ -14,11 +14,13 @@ import com.zinikai.shop.domain.member.exception.MemberNotFoundException;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -27,11 +29,9 @@ import java.time.LocalDateTime;
 @Service
 public class UserCouponServiceImpl implements UserCouponService {
 
-
     private final MemberRepository memberRepository;
     private final CouponRepository couponRepository;
     private final UserCouponRepository userCouponRepository;
-
 
     @Override
     public UserCoupon createCoupon(Member member, Coupon coupon) {
@@ -86,7 +86,6 @@ public class UserCouponServiceImpl implements UserCouponService {
     public Page<UserCouponResponseDto> myUnusedCouponList(String memberUuid, Pageable pageable) {
 
         LocalDateTime now = LocalDateTime.now();
-
         Page<UserCoupon> unusedCoupons = userCouponRepository.findUsableCoupons(memberUuid, now, pageable);
 
         return unusedCoupons.map(UserCoupon::toResponse);
@@ -96,7 +95,6 @@ public class UserCouponServiceImpl implements UserCouponService {
     public Page<UserCouponResponseDto> myUsedCouponList(String memberUuid, Pageable pageable) {
 
         LocalDateTime now = LocalDateTime.now();
-
         Page<UserCoupon> usedCoupons = userCouponRepository.findUsedCoupons(memberUuid, now, pageable);
 
         return usedCoupons.map(UserCoupon::toResponse);

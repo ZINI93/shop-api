@@ -21,7 +21,7 @@ public class UserCouponApiController {
 
     private final UserCouponService userCouponService;
 
-    
+
     @PostMapping("{couponUuid}")
     ResponseEntity<UserCouponResponseDto> couponIssuance(@PathVariable String couponUuid,
                                                          Authentication authentication) {
@@ -52,7 +52,7 @@ public class UserCouponApiController {
     }
 
     @GetMapping("/me")
-    ResponseEntity<Page<UserCouponResponseDto>> UserCouponList(@PageableDefault(size = 10) Pageable pageable,
+    ResponseEntity<Page<UserCouponResponseDto>> userCouponList(@PageableDefault(size = 10) Pageable pageable,
                                                                Authentication authentication) {
 
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
@@ -63,14 +63,38 @@ public class UserCouponApiController {
         return ResponseEntity.ok(userCoupon);
     }
 
-    @DeleteMapping("{userCouponUuid}")
-    ResponseEntity<Void> deleteUserCoupon(@PathVariable String userCouponUuid,
-                                                           Authentication authentication) {
+    @GetMapping("/me/unused")
+    ResponseEntity<Page<UserCouponResponseDto>> unusedUserCouponList(@PageableDefault(size = 10) Pageable pageable,
+                                                                     Authentication authentication) {
 
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        userCouponService.deleteCoupon(memberUuid,userCouponUuid);
+        Page<UserCouponResponseDto> userCoupon = userCouponService.myUnusedCouponList(memberUuid, pageable);
+
+        return ResponseEntity.ok(userCoupon);
+    }
+
+    @GetMapping("/me/used")
+    ResponseEntity<Page<UserCouponResponseDto>> usedUserCouponList(@PageableDefault(size = 10) Pageable pageable,
+                                                                   Authentication authentication) {
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        Page<UserCouponResponseDto> userCoupon = userCouponService.myUsedCouponList(memberUuid, pageable);
+
+        return ResponseEntity.ok(userCoupon);
+    }
+
+    @DeleteMapping("{userCouponUuid}")
+    ResponseEntity<Void> deleteUserCoupon(@PathVariable String userCouponUuid,
+                                          Authentication authentication) {
+
+        CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
+        String memberUuid = customUserDetails.getMemberUuid();
+
+        userCouponService.deleteCoupon(memberUuid, userCouponUuid);
 
         return ResponseEntity.noContent().build();
     }

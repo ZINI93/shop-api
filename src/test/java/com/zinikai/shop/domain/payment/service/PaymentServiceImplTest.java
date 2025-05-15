@@ -1,6 +1,5 @@
 package com.zinikai.shop.domain.payment.service;
 
-import com.zinikai.shop.domain.category.service.ProductCategoryServiceImpl;
 import com.zinikai.shop.domain.mail.service.MailService;
 import com.zinikai.shop.domain.member.entity.Member;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
@@ -127,7 +126,7 @@ class PaymentServiceImplTest {
         List<Payment> mockData = List.of(payment);
         Page<Payment> mockPage = new PageImpl<>(mockData, pageable, mockData.size());
 
-        when(paymentRepository.findAllByOwnerUuid(member.getMemberUuid(),pageable)).thenReturn(mockPage);
+        when(paymentRepository.findAllByMemberMemberUuid(member.getMemberUuid(),pageable)).thenReturn(mockPage);
         //when
         Page<PaymentResponseDto> payments = paymentService.getPayments(member.getMemberUuid(), pageable);
 
@@ -135,7 +134,7 @@ class PaymentServiceImplTest {
         assertNotNull(payments);
         assertEquals(10, payments.getSize());
 
-        verify(paymentRepository, times(1)).findAllByOwnerUuid(member.getMemberUuid(),pageable);
+        verify(paymentRepository, times(1)).findAllByMemberMemberUuid(member.getMemberUuid(),pageable);
 
     }
 

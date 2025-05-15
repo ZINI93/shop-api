@@ -32,17 +32,24 @@ class UserCouponServiceImplTest {
     @Mock MemberRepository memberRepository;
     @Mock CouponRepository couponRepository;
     @Mock UserCouponRepository userCouponRepository;
+    @Mock private Clock clock;
+    private final Instant fixedInstant = Instant.parse("2025-01-01T12:00:00Z");
 
     @InjectMocks UserCouponServiceImpl userCouponService;
 
     Member member;
-
     Coupon coupon;
-
     UserCoupon userCoupon;
+
+    Clock fixedClock;
 
     @BeforeEach
     void setup() {
+
+        fixedClock = Clock.fixed(
+                Instant.parse("2025-01-01T12:00:00Z"),
+                ZoneId.systemDefault()
+        );
 
         member = Member.builder().memberUuid(UUID.randomUUID().toString()).build();
         coupon = Coupon.builder().member(member).couponUuid(UUID.randomUUID().toString()).startDate(LocalDateTime.now().minusDays(2)).build();
@@ -99,6 +106,8 @@ class UserCouponServiceImplTest {
         List<UserCoupon> mockUserCoupons = List.of(userCoupon);
         PageImpl<UserCoupon> mockPage = new PageImpl<>(mockUserCoupons, pageable, mockUserCoupons.size());
 
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
         when(userCouponRepository.findAllUserCoupons(
                 eq(member.getMemberUuid()),
                 any(LocalDateTime.class),
@@ -120,26 +129,57 @@ class UserCouponServiceImplTest {
     void unusedCouponListTest(){
 
         //given
+
+        LocalDateTime now = LocalDateTime.now(fixedClock);
+
         PageRequest pageable = PageRequest.of(0, 10);
         List<UserCoupon> mockData = List.of(userCoupon);
         PageImpl<UserCoupon> userCoupons = new PageImpl<>(mockData, pageable, mockData.size());
 
-        LocalDateTime now = LocalDateTime.now();
-
-        when(userCouponRepository.findUsableCoupons(eq(member.getMemberUuid()), any(LocalDateTime.class), eq(pageable))).thenReturn(userCoupons);
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(userCouponRepository.findUsableCoupons(member.getMemberUuid(), now, pageable)).thenReturn(userCoupons);
 
 
         //when
 
         Page<UserCouponResponseDto> result = userCouponService.myUnusedCouponList(member.getMemberUuid(), pageable);
 
-
         //then
         assertNotNull(result);
         assertEquals(userCoupons.getSize(),result.getSize());
         assertEquals(false, result.getContent().get(0).getIsUsed() );
 
-        verify(userCouponRepository,times(1)).findUsableCoupons(eq(member.getMemberUuid()), any(LocalDateTime.class), eq(pageable));
+        verify(userCouponRepository,times(1)).findUsableCoupons(member.getMemberUuid(), now, pageable);
+
+    }
+
+    @Test
+    void usedUserCouponListTest(){
+
+        //given
+
+        UserCoupon usedCoupon = UserCoupon.builder().member(member).coupon(coupon).isUsed(true).build();
+
+        PageRequest pageable = PageRequest.of(0, 10);
+        List<UserCoupon> mockData = List.of(usedCoupon);
+        PageImpl<UserCoupon> userCoupons = new PageImpl<>(mockData, pageable, mockData.size());
+
+        LocalDateTime now = LocalDateTime.now(fixedClock);
+
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(userCouponRepository.findUsedCoupons(member.getMemberUuid(),now,pageable)).thenReturn(userCoupons);
+
+        //when
+
+        Page<UserCouponResponseDto> result = userCouponService.myUsedCouponList(member.getMemberUuid(), pageable);
+
+        //then
+        assertNotNull(result);
+        assertEquals(true, result.getContent().get(0).getIsUsed());
+
+        verify(userCouponRepository,times(1)).findUsedCoupons(member.getMemberUuid(),now,pageable);
 
     }
 

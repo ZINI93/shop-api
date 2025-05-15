@@ -47,7 +47,7 @@ public class CouponServiceImpl implements CouponService {
 
     }
 
-    @Override
+    @Override @Transactional
     public CouponResponseDto createCouponWithValidate(String memberUuid, CouponRequestDto requestDto) {
 
         log.info("Creating coupon for member UUID:{}", memberUuid);

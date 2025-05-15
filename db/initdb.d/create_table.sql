@@ -129,14 +129,15 @@ create TABLE `carts` (
 create TABLE `payments` (
     `payment_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `orders_id` BIGINT NOT NULL,
+    `member_id` BIGINT NOT NULL,
     `status` VARCHAR(50) NOT NULL,
     `payment_method` VARCHAR(100) NOT NULL,
-    `owner_uuid` VARCHAR(36) NOT NULL,
     `payment_uuid` VARCHAR(36) NOT NULL UNIQUE,
 
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
 
+    CONSTRAINT `fk_payment_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`member_id`) On delete CASCADE,
     CONSTRAINT `fk_payment_order` FOREIGN KEY (`orders_id`) REFERENCES `orders`(`orders_id`) ON delete CASCADE,
     CONSTRAINT `chk_payment_status` CHECK (`status` IN ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'))
 );

@@ -32,7 +32,7 @@ public class CartController {
         CustomUserDetails customUserDetails = getPrincipal(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        CartResponseDto cart = cartService.createCart(memberUuid, requestDto);
+        CartResponseDto cart = cartService.createCartWithValidate(memberUuid, requestDto);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("{cartUuid}")

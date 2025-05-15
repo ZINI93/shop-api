@@ -77,7 +77,6 @@ public class CouponApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-
         CouponResponseDto coupon = couponService.updateCoupon(memberUuid, couponUuid, updateDto);
 
         return ResponseEntity.ok(coupon);
