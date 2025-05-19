@@ -8,7 +8,9 @@ import com.zinikai.shop.domain.delivery.entity.Carrier;
 import com.zinikai.shop.domain.delivery.entity.Delivery;
 import com.zinikai.shop.domain.delivery.entity.DeliveryStatus;
 import com.zinikai.shop.domain.delivery.repository.DeliveryRepository;
+import com.zinikai.shop.domain.member.dto.MemberRequestDto;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
@@ -31,11 +33,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DeliveryServiceImplTest {
 
-    @Mock
-    OrdersRepository ordersRepository;
+    @Mock OrdersRepository ordersRepository;
 
-    @Mock
-    DeliveryRepository deliveryRepository;
+    @Mock DeliveryRepository deliveryRepository;
+    @Mock MemberRepository memberRepository;
 
     @InjectMocks
     DeliveryServiceImpl deliveryService;
@@ -76,7 +77,7 @@ class DeliveryServiceImplTest {
                 DeliveryStatus.PENDING,
                 requestDto.getTrackingNumber(),
                 requestDto.getCarrier(),
-                delivery.getMember(),
+                member,
                 orders.getMember().getMemberUuid(),
                 UUID.randomUUID().toString()
         );
@@ -89,17 +90,20 @@ class DeliveryServiceImplTest {
     void createDeliveryTest() {
 
         //given
+        when(memberRepository.findByMemberUuid(member.getMemberUuid())).thenReturn(Optional.ofNullable(member));
         when(ordersRepository.findByOrderUuid(orders.getOrderUuid())).thenReturn(Optional.ofNullable(orders));
         when(deliveryRepository.save(any(Delivery.class))).thenReturn(delivery);
 
         //when
-        DeliveryResponseDto result = deliveryService.createDelivery(member.getMemberUuid(), requestDto);
+        DeliveryResponseDto result = deliveryService.createDeliveryIfOrderCompleted(member.getMemberUuid(), requestDto);
 
         //then
         assertNotNull(result);
         assertEquals(orders.getAddress().getAddressUuid(), result.getAddressUuid());
         assertEquals(DeliveryStatus.PENDING, result.getDeliveryStatus());
 
+        verify(memberRepository, times(1)).findByMemberUuid(member.getMemberUuid());
+        verify(ordersRepository, times(1)).findByOrderUuid(orders.getOrderUuid());
         verify(deliveryRepository, times(1)).save(any(Delivery.class));
     }
 
@@ -108,7 +112,7 @@ class DeliveryServiceImplTest {
     void getSellerDeliveryInfoTest() {
 
         //given
-        when(deliveryRepository.findByMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
+        when(deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
 
         //when
         DeliveryResponseDto result = deliveryService.getDeliveryInfo(member.getMemberUuid(), delivery.getDeliveryUuid());
@@ -118,7 +122,7 @@ class DeliveryServiceImplTest {
         assertEquals(orders.getOrderUuid(), result.getOrderUuid());
 
 
-        verify(deliveryRepository, times(1)).findByMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid());
+        verify(deliveryRepository, times(1)).findByMemberMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid());
     }
 
     @DisplayName("購入者が発送情報を確認")
@@ -127,7 +131,7 @@ class DeliveryServiceImplTest {
 
         //given
 
-        when(deliveryRepository.findByMemberUuidAndDeliveryUuid(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
+        when(deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
 
         //when
         DeliveryResponseDto result = deliveryService.getDeliveryInfo(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid());
@@ -140,14 +144,14 @@ class DeliveryServiceImplTest {
         assertEquals(orders.getOrderUuid(), result.getOrderUuid());
         assertEquals(orders.getMember().getMemberUuid(), result.getBuyerUuid());
 
-        verify(deliveryRepository, times(1)).findByMemberUuidAndDeliveryUuid(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid());
+        verify(deliveryRepository, times(1)).findByMemberMemberUuidAndDeliveryUuid(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid());
     }
 
     @DisplayName("発送をアップデート")
     @Test
     void updateDelivery() {
         //given
-        when(deliveryRepository.findByMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
+        when(deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid())).thenReturn(Optional.ofNullable(delivery));
 
         //when
 
@@ -160,7 +164,7 @@ class DeliveryServiceImplTest {
         assertEquals(DeliveryStatus.PENDING, delivery.getDeliveryStatus());
         assertEquals(Carrier.YAMATO,updateDto.getCarrier());
 
-        verify(deliveryRepository, times(1)).findByMemberUuidAndDeliveryUuid(orders.getMember().getMemberUuid(), delivery.getDeliveryUuid());
+        verify(deliveryRepository, times(1)).findByMemberMemberUuidAndDeliveryUuid(member.getMemberUuid(), delivery.getDeliveryUuid());
     }
 
 

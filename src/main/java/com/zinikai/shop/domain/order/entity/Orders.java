@@ -81,7 +81,9 @@ public class Orders extends TimeStamp {
         if (orders.getStatus() != com.zinikai.shop.domain.order.entity.Status.ORDER_PENDING) {
             throw new IllegalArgumentException("Order is already confirmed");
         }
-
     }
 
+    public BigDecimal sellerEarnings(BigDecimal rate){
+       return this.getTotalAmount().multiply(rate);
+    }
 }

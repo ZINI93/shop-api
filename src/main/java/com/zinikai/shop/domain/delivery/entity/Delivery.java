@@ -88,7 +88,7 @@ public class Delivery extends TimeStamp {
     }
 
 
-    public void confirmDelivery(DeliveryStatus deliveryStatus, LocalDateTime confirmDelivery) {
+    public void confirmDelivery(LocalDateTime confirmDelivery) {
         this.deliveryStatus = DeliveryStatus.DELIVERED;
         this.confirmDelivery = confirmDelivery;
     }
