@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,11 +59,19 @@ class PaymentServiceImplTest {
         field.set(member, id);
     }
 
+    private void setMemberBalance(Member member, BigDecimal balance) throws Exception {
+        Field field = member.getClass().getDeclaredField("balance");
+        field.setAccessible(true);
+        field.set(member, balance);
+    }
+
     private void setOrdersId(Orders orders, Long id) throws Exception {
         Field field = orders.getClass().getDeclaredField("id");
         field.setAccessible(true);
         field.set(orders, id);
     }
+
+
     private void setPaymentId(Payment payment, Long id) throws Exception {
         Field field = payment.getClass().getDeclaredField("id");
         field.setAccessible(true);
@@ -75,8 +84,9 @@ class PaymentServiceImplTest {
 
         member = Member.builder().email("1234@naver.com").name("zini").memberUuid(UUID.randomUUID().toString()).build();
         setMemberId(member, 1L);
+        setMemberBalance(member,new BigDecimal(100000));
 
-        orders = Orders.builder().member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.ORDER_PENDING).orderUuid(UUID.randomUUID().toString()).build();
+        orders = Orders.builder().member(Member.builder().memberUuid(UUID.randomUUID().toString()).build()).status(Status.ORDER_PENDING).paymentMethod("paypay").totalAmount(new BigDecimal(100.00)).orderUuid(UUID.randomUUID().toString()).build();
         setOrdersId(orders, 1L);
 
         requestDto = new PaymentRequestDto(
@@ -88,7 +98,7 @@ class PaymentServiceImplTest {
                 orders,
                 PaymentStatus.PENDING,
                 "PayPay",
-                member.getMemberUuid(),
+                member,
                 UUID.randomUUID().toString()
         );
 
@@ -97,26 +107,41 @@ class PaymentServiceImplTest {
 
     }
 
-//    @Test
-//    void createPayment() {
-//        //given
-//        when(memberRepository.findByMemberUuid(orders.getMember().getMemberUuid())).thenReturn(Optional.ofNullable(member));
-//        when(ordersRepository.findById(orders.getId())).thenReturn(Optional.ofNullable(orders));
-//        when(ordersRepository.findById(1L)).thenReturn(Optional.ofNullable(orders));
-//        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
-//
-//        //when
-//        PaymentResponseDto result = paymentService.createPayment(orders.getMember().getMemberUuid(), requestDto);
-//        mailService.sendPaymentCompletedEmail(orders.getMember().getEmail(),orders.getMember().getName(),orders.getOrderUuid(),orders.getTotalAmount(),orders.getPaymentMethod());
-//
-//
-//        //then
-//        assertNotNull(result);
-//        assertEquals(1L, result.getOrderId());
-//        assertEquals("PayPay", result.getPaymentMethod());
-//
-//        verify(paymentRepository, times(1)).save(any(Payment.class));
-//    }
+    @Test
+    void createPayment() {
+        //given
+        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
+
+        //when
+        PaymentResponseDto result = paymentService.createPayment(member, orders);
+
+
+        //then
+        assertNotNull(result);
+        assertEquals(payment.getPaymentMethod(), result.getPaymentMethod());
+        assertEquals(payment.getPaymentMethod(), result.getPaymentMethod());
+
+        verify(paymentRepository, times(1)).save(any(Payment.class));
+    }
+
+    @Test
+    void confirmPayment(){
+
+        //given
+        when(paymentRepository.findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
+        when(ordersRepository.findByOrderUuid(payment.getOrders().getOrderUuid())).thenReturn(Optional.ofNullable(orders));
+
+        //when
+        PaymentResponseDto result = paymentService.confirmPayment(member.getMemberUuid(), payment.getPaymentUuid());
+        System.out.println("balance:" + member.getBalance());
+        System.out.println("amount:" + orders.getTotalAmount());
+        //then
+        assertNotNull(result);
+        assertEquals(payment.getPaymentMethod(),result.getPaymentMethod());
+
+        verify(paymentRepository,times(1)).findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
+        verify(ordersRepository,times(1)).findByOrderUuid(payment.getOrders().getOrderUuid());
+    }
 
     @Test
     void TestPayments() {
@@ -142,7 +167,7 @@ class PaymentServiceImplTest {
     void updatePayment() {
 
         //given
-        when(paymentRepository.findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
+        when(paymentRepository.findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
 
         PaymentUpdateDto updatePayment = PaymentUpdateDto.builder()
                 .paymentMethod("CASH")
@@ -156,17 +181,17 @@ class PaymentServiceImplTest {
         assertNotNull(result);
         assertEquals(updatePayment.getPaymentMethod(), result.getPaymentMethod());
         assertEquals(updatePayment.getStatus(), result.getStatus());
-        verify(paymentRepository,times(1)).findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
+        verify(paymentRepository,times(1)).findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
     }
 
     @Test
     void deletePayment() {
         //given
-        when(paymentRepository.findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
+        when(paymentRepository.findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid())).thenReturn(Optional.ofNullable(payment));
 
         //when
         paymentService.deletePayment(member.getMemberUuid(), payment.getPaymentUuid());
         //then
-        verify(paymentRepository,times(1)).findByOwnerUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
+        verify(paymentRepository,times(1)).findByMemberMemberUuidAndPaymentUuid(member.getMemberUuid(),payment.getPaymentUuid());
     }
 }

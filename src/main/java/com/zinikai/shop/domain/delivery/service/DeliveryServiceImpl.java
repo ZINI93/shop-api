@@ -5,11 +5,16 @@ import com.zinikai.shop.domain.delivery.dto.DeliveryResponseDto;
 import com.zinikai.shop.domain.delivery.dto.DeliveryUpdateDto;
 import com.zinikai.shop.domain.delivery.entity.Delivery;
 import com.zinikai.shop.domain.delivery.entity.DeliveryStatus;
+import com.zinikai.shop.domain.delivery.exception.DeliveryNotFoundException;
+import com.zinikai.shop.domain.delivery.exception.DeliveryStateMissMatchException;
 import com.zinikai.shop.domain.delivery.repository.DeliveryRepository;
 import com.zinikai.shop.domain.member.entity.Member;
+import com.zinikai.shop.domain.member.exception.MemberNotFoundException;
 import com.zinikai.shop.domain.member.repository.MemberRepository;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.entity.Status;
+import com.zinikai.shop.domain.order.exception.OrderNotFoundException;
+import com.zinikai.shop.domain.order.exception.OrderStateMissMatchException;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 
 @Slf4j
@@ -26,53 +32,50 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class DeliveryServiceImpl implements DeliveryService {
-
     private final OrdersRepository ordersRepository;
+
     private final DeliveryRepository deliveryRepository;
     private final MemberRepository memberRepository;
     private static final BigDecimal SELLER_EARNINGS_PERCENTAGE = new BigDecimal("0.95");
 
 
     @Override
-    @Transactional
-    public DeliveryResponseDto createDelivery(String ownerUuid, DeliveryRequestDto requestDto) {
+    public Delivery createDelivery(Member member, Orders order, DeliveryRequestDto requestDto) {
 
-        log.info("Creating delivery for owner UUID :{}", ownerUuid);
-
-        Orders orders = ordersRepository.findByOrderUuid(requestDto.getOrderUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found Order UUID"));
-
-        Member member = memberRepository.findByMemberUuid(ownerUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found Member Uuid"));
-
-        if (orders.getStatus() != Status.ORDER_COMPLETED) {
-            throw new IllegalArgumentException("Cannot create delivery for an order that is not completed.");
-        }
-
-        Delivery delivery = Delivery.builder()
-                .orders(orders)
-                .address(orders.getAddress())
+        return Delivery.builder()
+                .orders(order)
+                .address(order.getAddress())
                 .deliveryStatus(DeliveryStatus.PENDING)
                 .trackingNumber(requestDto.getTrackingNumber())
                 .carrier(requestDto.getCarrier())
                 .member(member) // 배송을 의뢰하는 판매자 정보
                 .build();
-
-        log.info("Created delivery :{}", delivery);
-
-        return deliveryRepository.save(delivery).toResponseDto();
     }
 
     @Override
     @Transactional
-    public DeliveryResponseDto shippedDelivery(String ownerUuid, String deliveryUuid) {
+    public DeliveryResponseDto createDeliveryIfOrderCompleted(String memberUuid, DeliveryRequestDto requestDto) {
 
-        Delivery delivery = deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
-                .orElseThrow(() -> new IllegalArgumentException("owner UUID not found for owner UUID: " + ownerUuid + ", delivery UUID: " + deliveryUuid));
+        log.info("Creating delivery for member UUID :{}", memberUuid);
 
-        if (delivery.getDeliveryStatus() != DeliveryStatus.PENDING) {
-            throw new IllegalArgumentException("Delivery has not been created.");
-        }
+        Orders orders = findOrderByOrderUuid(requestDto);
+        Member member = findMemberByMemberUuid(memberUuid);
+
+        validateOrderState(orders);
+        Delivery delivery = createDelivery(member, orders, requestDto);
+        Delivery savedDelivery = deliveryRepository.save(delivery);
+
+        log.info("Created delivery UUID:{}", savedDelivery.getDeliveryUuid());
+
+        return savedDelivery.toResponseDto();
+    }
+
+    @Override
+    @Transactional
+    public DeliveryResponseDto shipDelivery(String memberUuid, String deliveryUuid) {
+
+        Delivery delivery = findDeliveryByMemberUuidAndDeliveryUuid(memberUuid, deliveryUuid);
+        validateDeliveryStateIsPending(delivery);
         delivery.shippedDelivery(DeliveryStatus.SHIPPED);
 
         return delivery.toResponseDto();
@@ -80,67 +83,53 @@ public class DeliveryServiceImpl implements DeliveryService {
 
     @Override
     public DeliveryResponseDto getDeliveryInfo(String memberUuid, String deliveryUuid) {
-
         log.info("Searching delivery for member UUID:{}, delivery UUID:{}", memberUuid, deliveryUuid);
 
-        Delivery delivery = deliveryRepository.findByMemberUuidAndDeliveryUuid(memberUuid, deliveryUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found member UUID or delivery UUID"));
-
+        Delivery delivery = findDeliveryByMemberUuidAndDeliveryUuid(memberUuid, deliveryUuid);
         return delivery.toResponseDto();
     }
 
     @Override
     @Transactional
-    public DeliveryResponseDto updateDelivery(String ownerUuid, String deliveryUuid, DeliveryUpdateDto updateDto) {
+    public DeliveryResponseDto updateDelivery(String memberUuid, String deliveryUuid, DeliveryUpdateDto updateDto) {
 
-        log.info("Updating delivery for owner UUID :{}, delivery UUID:{}", ownerUuid, deliveryUuid);
+        log.info("Updating delivery for member UUID :{}, delivery UUID:{}", memberUuid, deliveryUuid);
 
-        Delivery delivery = deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(ownerUuid, deliveryUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID or delivery UUID"));
-
-        if (delivery.getDeliveryStatus() != DeliveryStatus.PENDING) {
-            throw new IllegalArgumentException("Delivery is already confirmed");
-        }
+        Delivery delivery = findDeliveryByMemberUuidAndDeliveryUuid(memberUuid, deliveryUuid);
+        validateDeliveryStateIsPending(delivery);
 
         delivery.updateInfo(updateDto);
 
-        log.info("Updated delivery");
+        log.info("Updated delivery UUID:{}", delivery.getDeliveryUuid());
 
         return delivery.toResponseDto();
     }
 
-
     @Override
     @Transactional
-    public DeliveryResponseDto confirmDelivery(String buyerUuid, String deliveryUuid) {
+    public DeliveryResponseDto confirmDeliveryByBuyer(String buyerUuid, String deliveryUuid) {
 
         log.info("Confirming delivery for buyerUuid :{}, deliveryUuid:{}", buyerUuid, deliveryUuid);
 
-        Delivery delivery = deliveryRepository.findByBuyerUuidAndDeliveryUuid(buyerUuid, deliveryUuid)
-                .orElseThrow(() -> new IllegalArgumentException("Not found BuyerUUID or delivery UUID"));
+        Delivery delivery = findDeliveryByBuyerUuidAndDeliveryUuid(buyerUuid, deliveryUuid);
+        Member member = findMemberByMemberUuidInOrder(delivery.getOrders());
 
-        Orders orders = ordersRepository.findByOrderUuid(delivery.getOrders().getOrderUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found buyer UUID"));
+        validateDeliveryStateIsShipped(delivery);
 
-        Member member = memberRepository.findByMemberUuid(orders.getSellerUuid())
-                .orElseThrow(() -> new IllegalArgumentException("Not found owner UUID"));
+        transferPaymentToSeller(delivery, delivery.getOrders(), member);
 
-        if (!delivery.getDeliveryStatus().equals(DeliveryStatus.SHIPPED)) {
-            throw new IllegalArgumentException("It hasn't been delivered.");
-        }
-
-        delivery.confirmDelivery(DeliveryStatus.DELIVERED, LocalDateTime.now());
-
-
-        BigDecimal sellerEarnings = orders.getTotalAmount().multiply(SELLER_EARNINGS_PERCENTAGE);
-
-        orders.getMember().decreaseHoldBalance(orders.getTotalAmount());
-        member.increaseBalance(sellerEarnings);
-
-
-        log.info("Confirmed delivery");
+        log.info("Confirmed delivery UUID:{}", delivery.getDeliveryUuid());
 
         return delivery.toResponseDto();
+    }
+
+    private void transferPaymentToSeller(Delivery delivery, Orders order, Member seller) {
+        delivery.confirmDelivery(LocalDateTime.now());
+        BigDecimal sellerEarnings = order.sellerEarnings(SELLER_EARNINGS_PERCENTAGE);
+
+        Member buyer = order.getMember();
+        buyer.decreaseHoldBalance(order.getTotalAmount());
+        seller.increaseBalance(sellerEarnings);
     }
 
     @Transactional
@@ -157,11 +146,56 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
 
         pendingDeliveries.forEach(delivery -> {
-            delivery.confirmDelivery(DeliveryStatus.DELIVERED, LocalDateTime.now());
+            Member member = findMemberByMemberUuidInOrder(delivery.getOrders());
+            transferPaymentToSeller(delivery, delivery.getOrders(), member);
             log.info("Auto-confirmed delivery UUID: {}", delivery.getDeliveryUuid());
         });
 
         log.info("Completed scheduled task: Auto-confirm deliveries");
     }
 
+    private void validateDeliveryStateIsShipped(Delivery delivery) {
+        if (!delivery.getDeliveryStatus().equals(DeliveryStatus.SHIPPED)) {
+            throw new DeliveryStateMissMatchException("Delivery status is " + delivery.getDeliveryStatus()+ "Only completed delivery can have deliveries");
+        }
+    }
+
+    private void validateOrderState(Orders orders) {
+        if (orders.getStatus() != Status.ORDER_COMPLETED) {
+            throw new OrderStateMissMatchException("Order status is" + orders.getStatus() + " Only completed orders can have deliveries");
+        }
+    }
+    private static final EnumSet<DeliveryStatus> ALLOWED_STATUSES_FOR_UPDATE = EnumSet.of(DeliveryStatus.PENDING);
+
+    private void validateDeliveryStateIsPending(Delivery delivery) {
+        if (!ALLOWED_STATUSES_FOR_UPDATE.contains(delivery.getDeliveryStatus())) {
+            throw new DeliveryStateMissMatchException("Delivery has not been created.");
+        }
+    }
+
+    private Member findMemberByMemberUuid(String memberUuid) {
+        return memberRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> new MemberNotFoundException("member UUID: member not found."));
+    }
+
+    private Orders findOrderByOrderUuid(DeliveryRequestDto requestDto) {
+        return ordersRepository.findByOrderUuid(requestDto.getOrderUuid())
+                .orElseThrow(() -> new OrderNotFoundException("Not found Order UUID"));
+    }
+
+    private Delivery findDeliveryByMemberUuidAndDeliveryUuid(String memberUuid, String deliveryUuid) {
+        return deliveryRepository.findByMemberMemberUuidAndDeliveryUuid(memberUuid, deliveryUuid)
+                .orElseThrow(() -> new DeliveryNotFoundException("member UUID not found for owner UUID: " + memberUuid + ", delivery UUID: " + deliveryUuid));
+    }
+
+    private Member findMemberByMemberUuidInOrder(Orders orders) {
+        return memberRepository.findByMemberUuid(orders.getSellerUuid())
+                .orElseThrow(() -> new MemberNotFoundException("Member UUID: Member not found"));
+    }
+
+
+    private Delivery findDeliveryByBuyerUuidAndDeliveryUuid(String buyerUuid, String deliveryUuid) {
+        return deliveryRepository.findByBuyerUuidAndDeliveryUuid(buyerUuid, deliveryUuid)
+                .orElseThrow(() -> new DeliveryNotFoundException("Not found BuyerUUID or delivery UUID"));
+    }
 }

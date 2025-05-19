@@ -20,7 +20,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
     @Query("SELECT d FROM Delivery d WHERE d.deliveryStatus = :status AND d.confirmDelivery IS NULL AND d.updatedAt < :updatedAt")
     List<Delivery> findOldDeliveries(@Param("status")DeliveryStatus status, @Param("updatedAt") LocalDateTime updateAt);
 
-    Optional<Delivery> findByMemberMemberUuidAndDeliveryUuid(String ownerUuid, String deliveryUuid);
+    Optional<Delivery> findByMemberMemberUuidAndDeliveryUuid(String memberUuid, String deliveryUuid);
     Optional<Delivery> findByBuyerUuidAndDeliveryUuid(String BuyerUuid, String deliveryUuid);
 
 }

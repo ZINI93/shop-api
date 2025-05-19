@@ -6,10 +6,8 @@ import com.zinikai.shop.domain.delivery.dto.DeliveryResponseDto;
 import com.zinikai.shop.domain.delivery.dto.DeliveryUpdateDto;
 import com.zinikai.shop.domain.delivery.service.DeliveryService;
 import com.zinikai.shop.domain.member.service.CustomUserDetails;
-import com.zinikai.shop.domain.order.entity.OrderItem;
 import com.zinikai.shop.domain.order.entity.Orders;
 import com.zinikai.shop.domain.order.repository.OrdersRepository;
-import com.zinikai.shop.domain.product.repository.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +42,7 @@ public class DeliveryApiController {
             throw new IllegalArgumentException("Only the seller can create a delivery");
         }
 
-        DeliveryResponseDto delivery = deliveryService.createDelivery(sellerUuid, requestDto);
+        DeliveryResponseDto delivery = deliveryService.createDeliveryIfOrderCompleted(sellerUuid, requestDto);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -62,7 +60,7 @@ public class DeliveryApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        DeliveryResponseDto delivery = deliveryService.shippedDelivery(memberUuid, deliveryUuid);
+        DeliveryResponseDto delivery = deliveryService.shipDelivery(memberUuid, deliveryUuid);
 
         return ResponseEntity.ok(delivery);
 
@@ -100,7 +98,7 @@ public class DeliveryApiController {
         CustomUserDetails customUserDetails = getCustomUserDetails(authentication);
         String memberUuid = customUserDetails.getMemberUuid();
 
-        DeliveryResponseDto delivery = deliveryService.confirmDelivery(memberUuid, deliveryUuid);
+        DeliveryResponseDto delivery = deliveryService.confirmDeliveryByBuyer(memberUuid, deliveryUuid);
 
         return ResponseEntity.ok(delivery);
 
